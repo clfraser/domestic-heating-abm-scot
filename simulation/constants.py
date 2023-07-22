@@ -65,18 +65,19 @@ SIGMOID_OFFSET = 0
 
 
 class ConstructionYearBand(enum.Enum):
-    # These categories match the England & Wales EPC categories
-    BUILT_PRE_1900 = 0
-    BUILT_1900_1929 = 1
+    # Changed to match categories in Scottish House Condition Survey. Note that years 1996 - 1999 were not covered in original data. Potential typo?
+    BUILT_PRE_1919 = 0
+    BUILT_1919_1929 = 1
     BUILT_1930_1949 = 2
-    BUILT_1950_1966 = 3
-    BUILT_1967_1975 = 4
-    BUILT_1976_1982 = 5
-    BUILT_1983_1990 = 6
-    BUILT_1991_1995 = 7
-    BUILT_1996_2002 = 8
-    BUILT_2003_2006 = 9
-    BUILT_2007_ONWARDS = 10
+    BUILT_1950_1964 = 3
+    BUILT_1965_1975 = 4
+    BUILT_1976_1983 = 5
+    BUILT_1984_1991 = 6
+    BUILT_1992_1996 = 7
+    BUILT_1999_2002 = 8
+    BUILT_2003_2007 = 9
+    BUILT_2008_2011 = 10
+    BUILT_2012_ONWARDS = 11
 
 
 # Parameters describing distributions
@@ -87,6 +88,7 @@ GB_RENOVATION_BUDGET_WEIBULL_ALPHA = 0.55
 GB_RENOVATION_BUDGET_WEIBULL_BETA = 21_994
 
 # A distribution aligned to Q2 2021 GB property values
+# Note that these are not used for the Scottish data because income percentiles are calculated at the data processing stage.
 GB_PROPERTY_VALUE_WEIBULL_ALPHA = 1.61
 GB_PROPERTY_VALUE_WEIBULL_BETA = 280_000
 
