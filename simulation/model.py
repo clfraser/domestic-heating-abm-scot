@@ -209,7 +209,8 @@ def create_household_agents(
         yield Household(
             id=household.id,
             location=household.location,
-            property_value_gbp=household.property_value_gbp,
+            income_ahc=household.income_ahc,
+            income_ahc_percentile=household.income_ahc_percentile,
             total_floor_area_m2=household.total_floor_area_m2,
             is_off_gas_grid=household.is_off_gas_grid,
             construction_year_band=ConstructionYearBand[
