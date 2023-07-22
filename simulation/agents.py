@@ -105,7 +105,8 @@ class Household(Agent):
         self,
         id: int,
         location: str,
-        property_value_gbp: int,
+        income_ahc: int,
+        income_ahc_percentile: float,
         total_floor_area_m2: int,
         is_off_gas_grid: bool,
         construction_year_band: Optional[ConstructionYearBand],
@@ -126,6 +127,8 @@ class Household(Agent):
         self.id = id
         # Property / tenure attributes
         self.location = location
+        self.income_ahc = income_ahc
+        self.income_ahc_percentil = income_ahc_percentile
         self.property_type = property_type
         self.occupant_type = occupant_type
         self.built_form = built_form
@@ -166,11 +169,7 @@ class Household(Agent):
         PERCENTILE_FLOOR = 0.001
         PERCENTILE_CAP = 0.999
 
-        percentile = get_weibull_percentile_from_value(
-            GB_PROPERTY_VALUE_WEIBULL_ALPHA,
-            GB_PROPERTY_VALUE_WEIBULL_BETA,
-            self.property_value_gbp,
-        )
+        percentile = self.income_ahc_percentile
 
         return min(max(percentile, PERCENTILE_FLOOR), PERCENTILE_CAP)
 
