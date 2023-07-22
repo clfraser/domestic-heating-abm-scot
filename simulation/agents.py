@@ -128,12 +128,11 @@ class Household(Agent):
         # Property / tenure attributes
         self.location = location
         self.income_ahc = income_ahc
-        self.income_ahc_percentil = income_ahc_percentile
+        self.income_ahc_percentile = income_ahc_percentile
         self.property_type = property_type
         self.occupant_type = occupant_type
         self.built_form = built_form
         self.total_floor_area_m2 = total_floor_area_m2
-        self.property_value_gbp = property_value_gbp
         self.is_solid_wall = is_solid_wall
         self.construction_year_band = construction_year_band
         self.is_heat_pump_suitable_archetype = is_heat_pump_suitable_archetype
