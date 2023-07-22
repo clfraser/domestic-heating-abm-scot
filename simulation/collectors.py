@@ -17,9 +17,11 @@ def household_location(household) -> str:
     return household.location
 
 
-def household_property_value_gbp(household) -> int:
-    return household.property_value_gbp
+def household_income_ahc(household) -> int:
+    return household.income_ahc
 
+def household_income_ahc_percentile(household) -> int:
+    return household.income_ahc_percentile
 
 def household_floor_area_sqm(household) -> int:
     return household.total_floor_area_m2
@@ -287,7 +289,8 @@ def get_agent_collectors(
     return [
         household_id,
         collect_when(model, is_first_timestep)(household_location),
-        collect_when(model, is_first_timestep)(household_property_value_gbp),
+        collect_when(model, is_first_timestep)(household_income_ahc),
+        collect_when(model, is_first_timestep)(household_income_ahc_percentile),
         collect_when(model, is_first_timestep)(household_floor_area_sqm),
         collect_when(model, is_first_timestep)(household_is_off_gas_grid),
         collect_when(model, is_first_timestep)(household_construction_year_band),
