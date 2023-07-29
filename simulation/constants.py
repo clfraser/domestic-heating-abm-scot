@@ -209,8 +209,8 @@ class InterventionType(enum.Enum):
     GAS_OIL_BOILER_BAN = 2
 
 
-# Source: https://www.ons.gov.uk/peoplepopulationandcommunity/birthsdeathsandmarriages/families/datasets/householdsbytypeofhouseholdandfamilyregionsofenglandandukconstituentcountries
-ENGLAND_WALES_HOUSEHOLD_COUNT_2020 = 24_600_000
+# Adapted for Scotland in 2019. Taken from: https://www.nrscotland.gov.uk/statistics-and-data/statistics/statistics-by-theme/households/household-estimates/2021
+SCOTLAND_HOUSEHOLD_COUNT_2019 = 2_495_623
 
 # Source - https://www.heatpumps.org.uk/wp-content/uploads/2020/06/Building-the-Installer-Base-for-Net-Zero-Heating_02.06.pdf
 # Uses the CCC Balanced Pathway scenario of 625k HPs/year in 2028, stating it requires 33,700 installers - i.e. an installation takes ~19 days
