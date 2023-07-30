@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Dict
 import pandas as pd
 
 from simulation.constants import (
-    ENGLAND_WALES_HOUSEHOLD_COUNT_2020,
+    SCOTLAND_HOUSEHOLD_COUNT_2019,
     FUEL_KWH_TO_HEAT_KWH,
     HEATING_SYSTEM_FUEL,
     HeatingSystem,
@@ -311,7 +311,7 @@ def estimate_boiler_upgrade_scheme_grant(
     ]:
         return 0
 
-    model_population_scale = ENGLAND_WALES_HOUSEHOLD_COUNT_2020 / model.household_count
+    model_population_scale = SCOTLAND_HOUSEHOLD_COUNT_2019 / model.household_count
     boiler_upgrade_funding_cap_gbp = 450_000_000 / model_population_scale
     if (
         model.boiler_upgrade_scheme_cumulative_spend_gbp

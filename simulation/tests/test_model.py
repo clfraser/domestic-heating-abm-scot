@@ -5,7 +5,7 @@ import pytest
 from dateutil.relativedelta import relativedelta
 
 from simulation.constants import (
-    ENGLAND_WALES_HOUSEHOLD_COUNT_2020,
+    SCOTLAND_HOUSEHOLD_COUNT_2019,
     HEATING_SYSTEM_LIFETIME_YEARS,
     HOUSEHOLDS_PER_HEAT_PUMP_INSTALLER_FLOOR,
     BuiltForm,
@@ -188,7 +188,7 @@ class TestDomesticHeatingABM:
             annual_new_builds={2021: england_wales_new_builds},
         )
         model.add_agents([household_factory() for _ in range(number_of_agents)])
-        population_scale_factor = number_of_agents / ENGLAND_WALES_HOUSEHOLD_COUNT_2020
+        population_scale_factor = number_of_agents / SCOTLAND_HOUSEHOLD_COUNT_2019
         expected_new_builds_per_step = int(
             (england_wales_new_builds / 12) * population_scale_factor
         )

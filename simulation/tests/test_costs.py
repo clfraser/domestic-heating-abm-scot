@@ -5,7 +5,7 @@ import pytest
 
 from simulation.constants import (
     BOILERS,
-    ENGLAND_WALES_HOUSEHOLD_COUNT_2020,
+    SCOTLAND_HOUSEHOLD_COUNT_2019,
     HEAT_PUMPS,
     HeatingSystem,
 )
@@ -224,7 +224,7 @@ class TestCosts:
         model.add_agents([household_factory()] * num_households)
 
         model_population_scale = (
-            ENGLAND_WALES_HOUSEHOLD_COUNT_2020 / model.household_count
+            SCOTLAND_HOUSEHOLD_COUNT_2019 / model.household_count
         )
         boiler_upgrade_scheme_budget_scaled = 450_000_000 / model_population_scale
 

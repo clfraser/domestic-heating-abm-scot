@@ -197,10 +197,10 @@ RETROFIT_COSTS_SMALL_PROPERTY_SQM_LIMIT = {
     "SMALL_DETACHED_HOUSE": 117,
 }
 
-# Floor area of homes in England and Wales
-# Source: England/Wales Energy Performance Certificates
-FLOOR_AREA_SQM_33RD_PERCENTILE = 66
-FLOOR_AREA_SQM_66TH_PERCENTILE = 89
+# Floor area of homes in Scotland
+# Source: Expanded data from Scottish House Condition Survey
+FLOOR_AREA_SQM_33RD_PERCENTILE = 71
+FLOOR_AREA_SQM_66TH_PERCENTILE = 98
 
 
 class InterventionType(enum.Enum):

@@ -10,7 +10,7 @@ from abm import AgentBasedModel, UnorderedSpace
 from simulation.agents import Household
 from simulation.collectors import get_agent_collectors, get_model_collectors
 from simulation.constants import (
-    ENGLAND_WALES_HOUSEHOLD_COUNT_2020,
+    SCOTLAND_HOUSEHOLD_COUNT_2019,
     HEAT_PUMP_INSTALLATION_DURATION_MONTHS,
     HEATING_SYSTEM_LIFETIME_YEARS,
     HOUSEHOLDS_PER_HEAT_PUMP_INSTALLER_FLOOR,
@@ -84,7 +84,7 @@ class DomesticHeatingABM(AgentBasedModel):
 
         years_elapsed = (self.current_datetime - self.start_datetime).days / 365
         population_scale_factor = (
-            self.household_count / ENGLAND_WALES_HOUSEHOLD_COUNT_2020
+            self.household_count / SCOTLAND_HOUSEHOLD_COUNT_2019
         )
 
         heat_pump_installers = max(
@@ -126,7 +126,7 @@ class DomesticHeatingABM(AgentBasedModel):
         years_per_step = months_per_step / 12
         new_builds_in_current_year = self.annual_new_builds.get(current_year, 0)
         population_scale_factor = (
-            self.household_count / ENGLAND_WALES_HOUSEHOLD_COUNT_2020
+            self.household_count / SCOTLAND_HOUSEHOLD_COUNT_2019
         )
         return int(
             new_builds_in_current_year * years_per_step * population_scale_factor
