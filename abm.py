@@ -34,6 +34,12 @@ class UnorderedSpace(Generic[A]):
     def add_agent(self, agent: A) -> None:
         self.agents[agent] = None
 
+    def get_agent_by_id(self, agent_id: str) -> A:
+        for agent in self:
+            if agent.id == agent_id:
+                return agent
+        raise ValueError(f"Agent with id {agent_id} not found")
+
     def __contains__(self, agent: A) -> bool:
         return agent in self.agents
 
@@ -56,6 +62,9 @@ class AgentBasedModel(Generic[A]):
     def add_agents(self, agents: Iterable[A]) -> None:
         for agent in agents:
             self.add_agent(agent)
+
+    def get_agent_by_id(self, agent_id: str) -> A:
+        return self.space.get_agent_by_id(agent_id)
 
     def increment_timestep(self) -> None:
         raise NotImplementedError

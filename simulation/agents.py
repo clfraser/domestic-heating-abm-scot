@@ -123,6 +123,7 @@ class Household(Agent):
         roof_energy_efficiency: int,
         is_heat_pump_suitable_archetype: bool,
         is_heat_pump_aware: bool,
+        neighbours: str,
     ):
         self.id = id
         # Property / tenure attributes
@@ -151,6 +152,8 @@ class Household(Agent):
         self.is_heat_pump_aware = (
             self.heating_system in HEAT_PUMPS or is_heat_pump_aware
         )
+
+        self.neighbour_ids = neighbours.split('|')
 
         # Household investment decision attributes
         self.is_renovating = False
@@ -509,6 +512,7 @@ class Household(Agent):
     ):
 
         weights = []
+        neighbours_weight = []
         multiple_cap = 50  # An arbitrary cap to prevent math.exp overflowing
 
         for heating_system in costs.keys():
@@ -519,6 +523,13 @@ class Household(Agent):
             if self.is_heating_system_hassle(heating_system):
                 weight *= 1 - heating_system_hassle_factor
             weights.append(weight)
+
+            # count neighbours where neighbours.heating_system = heating_system
+            neighbours_with_heating_system = [n for n in self.neighbours if n.heating_system == heating_system]
+            neighbour_weight = len(neighbours_with_heating_system) / len(self.neighbours)
+            neighbours_weight.append(neighbour_weight)
+
+        combined_weights = [w + (n / 4) for w, n in zip(weights, neighbours_weight)]
 
         #  Households for which all options are highly unaffordable (x10 out of budget) "repair" their existing heating system
         threshold_weight = 1 / math.exp(10)
@@ -586,6 +597,29 @@ class Household(Agent):
 
         self.update_heating_status(model)
         self.evaluate_renovation(model)
+
+        # loop neighbours to see if any have a heat pump
+        # for neighbour_id in self.neighbours:
+        #     neighbour = model.get_agent_by_id(neighbour_id)
+        #     if neighbour.heating_system in HEAT_PUMPS:
+        #         self.is_heat_pump_aware = True
+        #         break
+
+        # aggregate the heating systems the neighbours have
+        # make an object with the heating systems as keys and the number of neighbours with that heating system as values
+        # heating_systems = {
+        #     HeatingSystem.BOILER_GAS: 0,
+        #     HeatingSystem.BOILER_OIL: 0,
+        #     HeatingSystem.BOILER_ELECTRIC: 0,
+        #     HeatingSystem.HEAT_PUMP_AIR_SOURCE: 0,
+        #     HeatingSystem.HEAT_PUMP_GROUND_SOURCE: 0,
+        # }
+        # Get list of neighbours from model
+        self.neighbours = [model.get_agent_by_id(neighbour_id) for neighbour_id in self.neighbour_ids]
+            # neighbour =
+        #     heating_systems[neighbour.heating_system] += 1
+
+        # gas_percent = heating_systems[HeatingSystem.BOILER_GAS] / len(self.neighbours)
 
         if self.is_renovating:
             if self.renovate_insulation:
