@@ -1,6 +1,8 @@
 import datetime
 import math
 import random
+import structlog
+logger = structlog.get_logger()
 from typing import TYPE_CHECKING, Dict, Optional, Set
 
 import pandas as pd
@@ -527,7 +529,6 @@ class Household(Agent):
                 if heating_system in HEAT_PUMPS:
                     weight *= 1.25
             weights.append(weight)
-
 
         #  Households for which all options are highly unaffordable (x10 out of budget) "repair" their existing heating system
         threshold_weight = 1 / math.exp(10)
