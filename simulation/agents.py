@@ -533,14 +533,14 @@ class Household(Agent):
             neighbour_weight = len(neighbours_with_heating_system) / len(self.neighbours) if len(self.neighbours) > 0 else 0
             neighbours_weight.append(neighbour_weight)
 
-        combined_weights = [w + (n / 4) for w, n in zip(weights, neighbours_weight)]
+        combined_weights = [w + n for w, n in zip(weights, neighbours_weight)]
 
         #  Households for which all options are highly unaffordable (x10 out of budget) "repair" their existing heating system
         threshold_weight = 1 / math.exp(10)
         if all([w < threshold_weight for w in weights]):
             return self.heating_system
 
-        return random.choices(list(costs.keys()), weights)[0]
+        return random.choices(list(costs.keys()), combined_weights)[0]
 
     def install_heating_system(
         self, heating_system: HeatingSystem, model: "DomesticHeatingABM"
