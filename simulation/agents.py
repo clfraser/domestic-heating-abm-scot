@@ -1,6 +1,8 @@
 import datetime
 import math
 import random
+import structlog
+logger = structlog.getLogger()
 from typing import TYPE_CHECKING, Dict, Optional, Set
 
 import pandas as pd
@@ -153,7 +155,9 @@ class Household(Agent):
             self.heating_system in HEAT_PUMPS or is_heat_pump_aware
         )
 
-        self.neighbour_ids = neighbours.split('|')
+        #logger.info("Neighbours in agent", neighbours = neighbours)
+
+        self.neighbour_ids = neighbours.split(',') if neighbours else []
 
         # Household investment decision attributes
         self.is_renovating = False
@@ -526,7 +530,7 @@ class Household(Agent):
 
             # count neighbours where neighbours.heating_system = heating_system
             neighbours_with_heating_system = [n for n in self.neighbours if n.heating_system == heating_system]
-            neighbour_weight = len(neighbours_with_heating_system) / len(self.neighbours)
+            neighbour_weight = len(neighbours_with_heating_system) / len(self.neighbours) if len(self.neighbours) > 0 else 0
             neighbours_weight.append(neighbour_weight)
 
         combined_weights = [w + (n / 4) for w, n in zip(weights, neighbours_weight)]
