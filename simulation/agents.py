@@ -123,6 +123,7 @@ class Household(Agent):
         roof_energy_efficiency: int,
         is_heat_pump_suitable_archetype: bool,
         is_heat_pump_aware: bool,
+        green_attitudes: bool,
     ):
         self.id = id
         # Property / tenure attributes
@@ -136,6 +137,9 @@ class Household(Agent):
         self.is_solid_wall = is_solid_wall
         self.construction_year_band = construction_year_band
         self.is_heat_pump_suitable_archetype = is_heat_pump_suitable_archetype
+
+        # Green attitudes
+        self.green_attitudes = green_attitudes
 
         # Heating / energy performance attributes
         self.is_off_gas_grid = is_off_gas_grid
@@ -518,7 +522,12 @@ class Household(Agent):
             weight = 1 / math.exp(cost_as_proportion_of_budget)
             if self.is_heating_system_hassle(heating_system):
                 weight *= 1 - heating_system_hassle_factor
+            if self.green_attitudes:
+                # Increase heat pump weight
+                if heating_system in HEAT_PUMPS:
+                    weight *= 1.25
             weights.append(weight)
+
 
         #  Households for which all options are highly unaffordable (x10 out of budget) "repair" their existing heating system
         threshold_weight = 1 / math.exp(10)
