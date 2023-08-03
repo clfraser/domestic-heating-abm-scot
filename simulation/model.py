@@ -25,6 +25,7 @@ from simulation.constants import (
 )
 
 
+
 class DomesticHeatingABM(AgentBasedModel):
     def __init__(
         self,
