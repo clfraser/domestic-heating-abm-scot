@@ -16,11 +16,11 @@ jobs:
         run: |
           docker build . --target runtime \
             -t "$ARTIFACT_REGISTRY"/docker/"${GITHUB_REPOSITORY#*/}":"$GITHUB_SHA" \
-            --cache-from "$ARTIFACT_REGISTRY"/docker/"${GITHUB_REPOSITORY#*/}":latest \
+            #--cache-from "$ARTIFACT_REGISTRY"/docker/"${GITHUB_REPOSITORY#*/}":latest \
             --build-arg BUILDKIT_INLINE_CACHE=1
           docker build . --target testrunner \
             -t "$ARTIFACT_REGISTRY"/docker/"${GITHUB_REPOSITORY#*/}":"$GITHUB_SHA"-testrunner \
-            --cache-from "$ARTIFACT_REGISTRY"/docker/"${GITHUB_REPOSITORY#*/}":latest-testrunner \
+            #--cache-from "$ARTIFACT_REGISTRY"/docker/"${GITHUB_REPOSITORY#*/}":latest-testrunner \
             --build-arg BUILDKIT_INLINE_CACHE=1
       - name: Run pytest
         run: docker run "$ARTIFACT_REGISTRY"/docker/"${GITHUB_REPOSITORY#*/}":"$GITHUB_SHA"-testrunner pytest
