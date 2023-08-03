@@ -1,5 +1,9 @@
 name: Containers
-on: [push]
+on: 
+  push:
+    branches:
+      - main
+  workflow_dispatch:
 env:
   ARTIFACT_REGISTRY: ${{ secrets.GCP_ARTIFACT_REGISTRY }}
 jobs:
