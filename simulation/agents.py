@@ -533,12 +533,14 @@ class Household(Agent):
             neighbour_weight = len(neighbours_with_heating_system) / len(self.neighbours) if len(self.neighbours) > 0 else 0
             neighbours_weight.append(neighbour_weight)
 
-        
-        # Normalise weights by dividing them by the largest weight
-        normalised_weights = [w / max(weights) for w in weights]
+            # Normalise weights by dividing them by the largest weight
+            normalised_weights = [w / max(weights) for w in weights]
 
-        # Combine weights. Start with an equal weighting for social network and affordability
-        combined_weights = [w + n for w, n in zip(normalised_weights, neighbours_weight)]
+            # If the heating system is a heat pump, add the neighbour weight to the heat pump weight
+            if heating_system in HEAT_PUMPS:
+               combined_weights = [w + n for w, n in zip(normalised_weights, neighbours_weight)]
+            else:
+                combined_weights = normalised_weights 
 
         #  Households for which all options are highly unaffordable (x10 out of budget) "repair" their existing heating system
         threshold_weight = 1 / math.exp(10)
