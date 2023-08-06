@@ -528,13 +528,14 @@ class Household(Agent):
                 weight *= 1 - heating_system_hassle_factor
             weights.append(weight)
 
-            # Normalise weights by dividing them by the largest weight
-            normalised_weights = [w / max(weights) for w in weights]
-
             # count neighbours where neighbours.heating_system = heating_system
             neighbours_with_heating_system = [n for n in self.neighbours if n.heating_system == heating_system]
             neighbour_weight = len(neighbours_with_heating_system) / len(self.neighbours) if len(self.neighbours) > 0 else 0
             neighbours_weight.append(neighbour_weight)
+
+        
+        # Normalise weights by dividing them by the largest weight
+        normalised_weights = [w / max(weights) for w in weights]
 
         # Combine weights. Start with an equal weighting for social network and affordability
         combined_weights = [w + n for w, n in zip(normalised_weights, neighbours_weight)]
