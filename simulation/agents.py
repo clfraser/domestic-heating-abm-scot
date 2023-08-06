@@ -443,6 +443,16 @@ class Household(Agent):
                 heating_system_options -= set(
                     [HeatingSystem.BOILER_GAS, HeatingSystem.BOILER_OIL]
                 )
+        
+        neighbours_heat_pump_aware = []
+
+        # Get the percentage of neighbours who are heat pump aware
+        neighbours_heat_pump_aware = [n for n in self.neighbours if n.is_heat_pump_aware == TRUE]
+        neighbour_heat_pump_aware_percent = len(neighbours_heat_pump_aware) / len(self.neighbours) if len(self.neighbours) > 0 else 0
+
+        # If the household is not heat pump aware, and the percentage of neighbours who are heat pump aware is greater than 0.5, then the household becomes heat pump aware
+        if not self.is_heat_pump_aware and neighbour_heat_pump_aware_percent > 0.5:
+            self.is_heat_pump_aware = TRUE
 
         if not is_gas_oil_boiler_ban_announced:
             # if a gas/boiler ban is announced, we assume all households are aware of heat pumps
@@ -516,6 +526,7 @@ class Household(Agent):
     ):
 
         weights = []
+        normalised_weights = []
         neighbours_weight = []
         multiple_cap = 50  # An arbitrary cap to prevent math.exp overflowing
 
@@ -700,3 +711,10 @@ class Household(Agent):
             self.heating_system_costs_subsidies = costs_subsidies
             self.heating_system_costs_insulation = costs_insulation
             self.insulation_element_upgrade_costs = chosen_insulation_costs
+            
+            # Store weights for logging
+            self.normalised_weights = normalised_weights
+            self.neighbour_weights = neighbour_weights
+            self.combined_weights = combined_weights
+
+
