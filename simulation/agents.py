@@ -155,7 +155,11 @@ class Household(Agent):
             self.heating_system in HEAT_PUMPS or is_heat_pump_aware
         )
 
-        #logger.info("Neighbours in agent", neighbours = neighbours)
+        # Decision attributes
+        self.cost_weights = {}
+        self.normalised_weights = {}
+        self.combined_weights = {}
+        self.neighbour_weights = {}
 
         self.neighbour_ids = neighbours.split(',') if neighbours else []
 
@@ -515,8 +519,10 @@ class Household(Agent):
         self, costs: Dict[HeatingSystem, float], heating_system_hassle_factor: float
     ):
 
-        weights = []
+        cost_weights = []
+        normalised_weights = []
         neighbours_weight = []
+        combined_weights = []
         multiple_cap = 50  # An arbitrary cap to prevent math.exp overflowing
 
         for heating_system in costs.keys():
@@ -526,7 +532,7 @@ class Household(Agent):
             weight = 1 / math.exp(cost_as_proportion_of_budget)
             if self.is_heating_system_hassle(heating_system):
                 weight *= 1 - heating_system_hassle_factor
-            weights.append(weight)
+            cost_weights.append(weight)
 
             # count neighbours where neighbours.heating_system = heating_system
             neighbours_with_heating_system = [n for n in self.neighbours if n.heating_system == heating_system]
@@ -535,14 +541,23 @@ class Household(Agent):
 
         
         # Normalise weights by dividing them by the largest weight
-        normalised_weights = [w / max(weights) for w in weights]
+        normalised_weights = [w / max(cost_weights) for w in cost_weights]
 
         # Combine weights. Start with an equal weighting for social network and affordability
         combined_weights = [w + n for w, n in zip(normalised_weights, neighbours_weight)]
 
+        #logger.info("Decision weights", id = self.id, heating_system = heating_system, combined_weights = combined_weights, weights = weights,
+        #    normalised_weights = normalised_weights, neighbours_weight = neighbours_weight)
+
+        # Add weights to self as dictionaries so they can be included in the collectors
+        self.cost_weights = dict(zip(costs, cost_weights))
+        self.normalised_weights = dict(zip(costs, normalised_weights))
+        self.neighbour_weights = dict(zip(costs, neighbours_weight))
+        self.combined_weights = dict(zip(costs, combined_weights))
+
         #  Households for which all options are highly unaffordable (x10 out of budget) "repair" their existing heating system
         threshold_weight = 1 / math.exp(10)
-        if all([w < threshold_weight for w in weights]):
+        if all([w < threshold_weight for w in cost_weights]):
             return self.heating_system
 
         return random.choices(list(costs.keys()), combined_weights)[0]

@@ -242,6 +242,95 @@ def household_heating_system_costs_insulation_heat_pump_ground_source(household)
         HeatingSystem.HEAT_PUMP_GROUND_SOURCE
     )
 
+def household_cost_weight_boiler_gas(household) -> float:
+    return household.cost_weights.get(HeatingSystem.BOILER_GAS, float("nan"))
+
+
+def household_cost_weight_boiler_electric(household) -> float:
+    return household.cost_weights.get(HeatingSystem.BOILER_ELECTRIC, float("nan"))
+
+
+def household_cost_weight_boiler_oil(household) -> float:
+    return household.cost_weights.get(HeatingSystem.BOILER_OIL, float("nan"))
+
+
+def household_cost_weight_heat_pump_air_source(household) -> float:
+    return household.cost_weights.get(
+        HeatingSystem.HEAT_PUMP_AIR_SOURCE, float("nan")
+    )
+
+
+def household_cost_weight_heat_pump_ground_source(household) -> float:
+    return household.cost_weights.get(
+        HeatingSystem.HEAT_PUMP_GROUND_SOURCE, float("nan")
+    )
+
+def household_normalised_weight_boiler_gas(household) -> float:
+    return household.normalised_weights.get(HeatingSystem.BOILER_GAS, float("nan"))
+
+
+def household_normalised_weight_boiler_electric(household) -> float:
+    return household.normalised_weights.get(HeatingSystem.BOILER_ELECTRIC, float("nan"))
+
+
+def household_normalised_weight_boiler_oil(household) -> float:
+    return household.normalised_weights.get(HeatingSystem.BOILER_OIL, float("nan"))
+
+
+def household_normalised_weight_heat_pump_air_source(household) -> float:
+    return household.normalised_weights.get(
+        HeatingSystem.HEAT_PUMP_AIR_SOURCE, float("nan")
+    )
+
+
+def household_normalised_weight_heat_pump_ground_source(household) -> float:
+    return household.normalised_weights.get(
+        HeatingSystem.HEAT_PUMP_GROUND_SOURCE, float("nan")
+    )
+
+def household_neighbours_weight_boiler_gas(household) -> float:
+    return household.neighbour_weights.get(HeatingSystem.BOILER_GAS, float("nan"))
+
+
+def household_neighbours_weight_boiler_electric(household) -> float:
+    return household.neighbour_weights.get(HeatingSystem.BOILER_ELECTRIC, float("nan"))
+
+
+def household_neighbours_weight_boiler_oil(household) -> float:
+    return household.neighbour_weights.get(HeatingSystem.BOILER_OIL, float("nan"))
+
+
+def household_neighbours_weight_heat_pump_air_source(household) -> float:
+    return household.neighbour_weights.get(
+        HeatingSystem.HEAT_PUMP_AIR_SOURCE, float("nan")
+    )
+
+def household_neighbours_weight_heat_pump_ground_source(household) -> float:
+    return household.neighbour_weights.get(
+        HeatingSystem.HEAT_PUMP_GROUND_SOURCE, float("nan")
+    )
+
+def household_combined_weight_boiler_gas(household) -> float:
+    return household.combined_weights.get(HeatingSystem.BOILER_GAS, float("nan"))
+
+
+def household_combined_weight_boiler_electric(household) -> float:
+    return household.combined_weights.get(HeatingSystem.BOILER_ELECTRIC, float("nan"))
+
+
+def household_combined_weight_boiler_oil(household) -> float:
+    return household.combined_weights.get(HeatingSystem.BOILER_OIL, float("nan"))
+
+
+def household_combined_weight_heat_pump_air_source(household) -> float:
+    return household.combined_weights.get(
+        HeatingSystem.HEAT_PUMP_AIR_SOURCE, float("nan")
+    )
+
+def household_combined_weight_heat_pump_ground_source(household) -> float:
+    return household.combined_weights.get(
+        HeatingSystem.HEAT_PUMP_GROUND_SOURCE, float("nan")
+    )
 
 def household_boiler_upgrade_grant_used(household) -> int:
     return household.boiler_upgrade_grant_used
@@ -306,7 +395,7 @@ def get_agent_collectors(
         collect_when(model, is_first_timestep)(household_discount_rate),
         collect_when(model, is_first_timestep)(household_renovation_budget),
         collect_when(model, is_first_timestep)(household_is_heat_pump_suitable),
-        collect_when(model, is_first_timestep)(household_is_heat_pump_aware),
+        household_is_heat_pump_aware,
         household_heating_system,
         household_heating_system_previous,
         household_heating_functioning,
@@ -343,6 +432,26 @@ def get_agent_collectors(
         household_heating_system_costs_insulation_heat_pump_air_source,
         household_heating_system_costs_insulation_heat_pump_ground_source,
         household_boiler_upgrade_grant_used,
+        household_cost_weight_boiler_gas,
+        household_cost_weight_boiler_electric,
+        household_cost_weight_boiler_oil,
+        household_cost_weight_heat_pump_air_source,
+        household_cost_weight_heat_pump_ground_source,
+        household_normalised_weight_boiler_gas,
+        household_normalised_weight_boiler_electric,
+        household_normalised_weight_boiler_oil,
+        household_normalised_weight_heat_pump_air_source,
+        household_normalised_weight_heat_pump_ground_source,
+        household_neighbours_weight_boiler_gas,
+        household_neighbours_weight_boiler_electric,
+        household_neighbours_weight_boiler_oil,
+        household_neighbours_weight_heat_pump_air_source,
+        household_neighbours_weight_heat_pump_ground_source,
+        household_combined_weight_boiler_gas,
+        household_combined_weight_boiler_electric,
+        household_combined_weight_boiler_oil,
+        household_combined_weight_heat_pump_air_source,
+        household_combined_weight_heat_pump_ground_source,
     ]
 
 
