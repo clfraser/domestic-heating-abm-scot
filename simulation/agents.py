@@ -447,12 +447,14 @@ class Household(Agent):
         neighbours_heat_pump_aware = []
 
         # Get the percentage of neighbours who are heat pump aware
-        neighbours_heat_pump_aware = [n for n in self.neighbours if n.is_heat_pump_aware == TRUE]
+        for neighbour in self.neighbours:
+            if neighbour.is_heat_pump_aware:
+                neighbours_heat_pump_aware.append(neighbour)
         neighbour_heat_pump_aware_percent = len(neighbours_heat_pump_aware) / len(self.neighbours) if len(self.neighbours) > 0 else 0
 
-        # If the household is not heat pump aware, and the percentage of neighbours who are heat pump aware is greater than 0.5, then the household becomes heat pump aware
-        if not self.is_heat_pump_aware and neighbour_heat_pump_aware_percent > 0.5:
-            self.is_heat_pump_aware = TRUE
+        # If the household is not heat pump aware, and the percentage of neighbours who are heat pump aware is greater than or equal to 0.5, then the household becomes heat pump aware
+        if not self.is_heat_pump_aware and neighbour_heat_pump_aware_percent >= 0.5:
+            self.is_heat_pump_aware
 
         if not is_gas_oil_boiler_ban_announced:
             # if a gas/boiler ban is announced, we assume all households are aware of heat pumps
@@ -539,26 +541,26 @@ class Household(Agent):
                 weight *= 1 - heating_system_hassle_factor
             weights.append(weight)
 
-            # count neighbours where neighbours.heating_system = heating_system
-            neighbours_with_heating_system = [n for n in self.neighbours if n.heating_system == heating_system]
-            neighbour_weight = len(neighbours_with_heating_system) / len(self.neighbours) if len(self.neighbours) > 0 else 0
-            neighbours_weight.append(neighbour_weight)
+#            # count neighbours where neighbours.heating_system = heating_system
+#            neighbours_with_heating_system = [n for n in self.neighbours if n.heating_system == heating_system]
+#            neighbour_weight = len(neighbours_with_heating_system) / len(self.neighbours) if len(self.neighbours) > 0 else 0
+#            neighbours_weight.append(neighbour_weight)
 
             # Normalise weights by dividing them by the largest weight
-            normalised_weights = [w / max(weights) for w in weights]
+#            normalised_weights = [w / max(weights) for w in weights]
 
             # If the heating system is a heat pump, add the neighbour weight to the heat pump weight
-            if heating_system in HEAT_PUMPS:
-               combined_weights = [w + n for w, n in zip(normalised_weights, neighbours_weight)]
-            else:
-                combined_weights = normalised_weights 
+#            if heating_system in HEAT_PUMPS:
+#               combined_weights = [w + n for w, n in zip(normalised_weights, neighbours_weight)]
+#            else:
+#                combined_weights = normalised_weights 
 
         #  Households for which all options are highly unaffordable (x10 out of budget) "repair" their existing heating system
         threshold_weight = 1 / math.exp(10)
         if all([w < threshold_weight for w in weights]):
             return self.heating_system
 
-        return random.choices(list(costs.keys()), combined_weights)[0]
+        return random.choices(list(costs.keys()), weights)[0]
 
     def install_heating_system(
         self, heating_system: HeatingSystem, model: "DomesticHeatingABM"
@@ -712,9 +714,4 @@ class Household(Agent):
             self.heating_system_costs_insulation = costs_insulation
             self.insulation_element_upgrade_costs = chosen_insulation_costs
             
-            # Store weights for logging
-            self.normalised_weights = normalised_weights
-            self.neighbour_weights = neighbour_weights
-            self.combined_weights = combined_weights
-
 
