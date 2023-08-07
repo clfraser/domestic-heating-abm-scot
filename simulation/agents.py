@@ -517,6 +517,7 @@ class Household(Agent):
 
         weights = []
         neighbours_weight = []
+        combined_weights = []
         multiple_cap = 50  # An arbitrary cap to prevent math.exp overflowing
 
         for heating_system in costs.keys():
@@ -540,7 +541,10 @@ class Household(Agent):
             if heating_system in HEAT_PUMPS:
                combined_weights = [w + n for w, n in zip(normalised_weights, neighbours_weight)]
             else:
-                combined_weights = normalised_weights 
+                combined_weights = normalised_weights
+
+            logger.info("Decision weights", id = self.id, heating_system = heating_system, combined_weights = combined_weights, weights = weights,
+            normalised_weights = normalised_weights, neighbours_weight = neighbours_weight)
 
         #  Households for which all options are highly unaffordable (x10 out of budget) "repair" their existing heating system
         threshold_weight = 1 / math.exp(10)
