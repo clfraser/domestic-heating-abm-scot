@@ -540,16 +540,13 @@ class Household(Agent):
             neighbours_weight.append(neighbour_weight)
 
             # Normalise weights by dividing them by the largest weight
-            normalised_weights = [w / max(weights) for w in weights]
+            normalised_weights = [w / max(cost_weights) for w in cost_weights]
 
             # If the heating system is a heat pump, add the neighbour weight to the heat pump weight
             if heating_system in HEAT_PUMPS:
                combined_weights = [w + n for w, n in zip(normalised_weights, neighbours_weight)]
             else:
                 combined_weights = normalised_weights
-
-            logger.info("Decision weights", id = self.id, heating_system = heating_system, combined_weights = combined_weights, weights = weights,
-            normalised_weights = normalised_weights, neighbours_weight = neighbours_weight)
 
         #logger.info("Decision weights", id = self.id, heating_system = heating_system, combined_weights = combined_weights, weights = weights,
         #    normalised_weights = normalised_weights, neighbours_weight = neighbours_weight)
