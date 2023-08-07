@@ -248,7 +248,7 @@ class Household(Agent):
             if not all(
                 [
                     self.is_heat_pump_suitable_archetype,
-                    self.potential_epc_rating.value >= EPCRating.C.value,
+                    #self.potential_epc_rating.value >= EPCRating.C.value, # Heat pump suitable isn't based on potential EPC value
                 ]
             )
             else True
