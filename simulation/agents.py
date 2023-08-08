@@ -142,7 +142,7 @@ class Household(Agent):
 
         # Green attitudes
         self.green_attitudes = green_attitudes
-        self.normalised_weights = normalised_weights
+        self.normalised_weights = {}
 
         # Heating / energy performance attributes
         self.is_off_gas_grid = is_off_gas_grid
