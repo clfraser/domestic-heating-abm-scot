@@ -230,9 +230,9 @@ def create_household_agents(
             potential_epc_rating=EPCRating[household.potential_epc_rating.upper()],
             occupant_type=OccupantType[household.occupant_type.upper()],
             is_solid_wall=household.is_solid_wall,
-            walls_energy_efficiency=household.walls_energy_efficiency,
-            windows_energy_efficiency=household.windows_energy_efficiency,
-            roof_energy_efficiency=household.roof_energy_efficiency,
+            walls_energy_efficiency=1,
+            windows_energy_efficiency=1,
+            roof_energy_efficiency=1,
             is_heat_pump_suitable_archetype=True
             if all_agents_heat_pump_suitable
             else household.is_heat_pump_suitable_archetype,
