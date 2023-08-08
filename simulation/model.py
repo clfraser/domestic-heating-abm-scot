@@ -238,7 +238,8 @@ def create_household_agents(
             is_heat_pump_suitable_archetype=True
             if all_agents_heat_pump_suitable
             else household.is_heat_pump_suitable_archetype,
-            is_heat_pump_aware=random.random() < heat_pump_awareness
+            is_heat_pump_aware=random.random() < heat_pump_awareness,
+            green_attitudes = household.green_attitudes
         )
 
 
