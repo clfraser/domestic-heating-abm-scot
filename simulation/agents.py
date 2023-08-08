@@ -524,11 +524,14 @@ class Household(Agent):
             weight = 1 / math.exp(cost_as_proportion_of_budget)
             if self.is_heating_system_hassle(heating_system):
                 weight *= 1 - heating_system_hassle_factor
+            weights.append(weight)
+
+
             if self.green_attitudes:
                 # Increase heat pump weight
                 if heating_system in HEAT_PUMPS:
-                    weight *= 1.25
-            weights.append(weight)
+                    weight *= 1.5
+           
 
         #  Households for which all options are highly unaffordable (x10 out of budget) "repair" their existing heating system
         threshold_weight = 1 / math.exp(10)
