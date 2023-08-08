@@ -515,6 +515,7 @@ class Household(Agent):
     ):
 
         weights = []
+        normalised_weights = []
         multiple_cap = 50  # An arbitrary cap to prevent math.exp overflowing
 
         for heating_system in costs.keys():
@@ -526,13 +527,15 @@ class Household(Agent):
                 weight *= 1 - heating_system_hassle_factor
             weights.append(weight)
 
+        # Normalise weights by dividing them by the largest weight
+        normalised_weights = [w / max(cost_weights) for w in cost_weights]
 
-            if self.green_attitudes:
-                # Increase heat pump weight
-                if heating_system in HEAT_PUMPS:
-                    weight *= 1.5
+        for heating_system in costs.keys():
+          if self.green_attitudes:
+            # Increase heat pump weight
+            if heating_system in HEAT_PUMPS:
+                normalised_weight *= 1.5
            
-
         #  Households for which all options are highly unaffordable (x10 out of budget) "repair" their existing heating system
         threshold_weight = 1 / math.exp(10)
         if all([w < threshold_weight for w in weights]):
