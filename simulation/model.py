@@ -1,5 +1,7 @@
 import datetime
 import random
+import structlog
+logger = structlog.getLogger()
 from bisect import bisect
 from typing import Dict, Iterator, List, Optional, Set, Tuple
 
@@ -206,6 +208,7 @@ def create_household_agents(
     all_agents_heat_pump_suitable: bool,
 ) -> Iterator[Household]:
     for household in household_population.itertuples():
+        #logger.info("Creating household", neighbours = household.neighbours)
         yield Household(
             id=household.id,
             location=household.location,
@@ -236,7 +239,7 @@ def create_household_agents(
             if all_agents_heat_pump_suitable
             else household.is_heat_pump_suitable_archetype,
             is_heat_pump_aware=random.random() < heat_pump_awareness,
-            green_attitudes = household.green_attitudes,
+            neighbours = household.neighbours,
         )
 
 
