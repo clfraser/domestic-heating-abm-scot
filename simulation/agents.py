@@ -539,6 +539,8 @@ class Household(Agent):
             # Increase normalised weight
             if heating_system in HEAT_PUMPS:
                 normalised_weights_dict[heating_system] *= 1.5
+        
+        self.normalised_weights = normalised_weights_dict
            
         #  Households for which all options are highly unaffordable (x10 out of budget) "repair" their existing heating system
         threshold_weight = 1 / math.exp(10)
