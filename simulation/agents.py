@@ -158,6 +158,9 @@ class Household(Agent):
         self.renovate_heating_system = False
         self.reset_previous_heating_decision_log()
 
+        # Weights
+        self.weights = {}
+
     @property
     def heating_fuel(self) -> HeatingFuel:
         return HEATING_SYSTEM_FUEL[self.heating_system]
@@ -519,6 +522,9 @@ class Household(Agent):
             if self.is_heating_system_hassle(heating_system):
                 weight *= 1 - heating_system_hassle_factor
             weights.append(weight)
+
+        # Set self.weights as a dictionary with the weights for each heating system
+        self.weights = dict(zip(costs.keys(),weights))
 
         #  Households for which all options are highly unaffordable (x10 out of budget) "repair" their existing heating system
         threshold_weight = 1 / math.exp(10)
