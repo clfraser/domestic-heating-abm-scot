@@ -38,7 +38,7 @@ def parse_args(args=None):
             return float(value)
         raise ValueError(f"Value must be between 0 and 1, got {value}")
     
-    def int_between_0_and_11(value: str):
+    def int_between_0_and_11(value: int):
         if 0 <= int(value) <= 11:
             return int(value)
         raise ValueError(f"Value must be between 0 and 11, got {value}")
@@ -172,7 +172,7 @@ def parse_args(args=None):
 
     parser.add_argument(
         "--awareness-influence-threshold",
-        type=int_between_0_and_11,
+        type = int,
         default=2,
         help="A value between 0 and 11 for the number of neighbours who must be aware of heat pumps for the agent to be aware of them too.",
     )
@@ -233,8 +233,18 @@ if __name__ == "__main__":
             ENGLAND_WALES_ANNUAL_NEW_BUILDS if args.include_new_builds else None,
         )
 
-        with smart_open.open(args.history_file, "w") as file:
-            write_jsonlines(history, file)
+       # with smart_open.open(args.history_file, "w") as file:
+       #     write_jsonlines(history, file)
+
+        installations = [];
+
+        for key, value in history:
+            installations.append(value['model_heat_pump_installations_at_current_step'])
+
+        yearly_installs = [sum(installations[i:i + 12]) for i in range(0, len(installations), 12)]
+        
+        print(yearly_installs)
+        print(installations)
 
     except Exception:
         logger.exception("simulation failed")

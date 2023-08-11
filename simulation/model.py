@@ -46,8 +46,8 @@ class DomesticHeatingABM(AgentBasedModel):
         ],
         heat_pump_installer_count: int,
         heat_pump_installer_annual_growth_rate: float,
-        annual_new_builds: Optional[Dict[int, int]],
         awareness_influence_threshold: int,
+        annual_new_builds: Optional[Dict[int, int]],
     ):
         self.start_datetime = start_datetime
         self.step_interval = step_interval
@@ -74,8 +74,8 @@ class DomesticHeatingABM(AgentBasedModel):
             heat_pump_installer_annual_growth_rate
         )
         self.heat_pump_installations_at_current_step = 0
-        self.annual_new_builds = annual_new_builds,
-        self.awareness_influence_threshold = self.awareness_influence_threshold
+        self.awareness_influence_threshold = awareness_influence_threshold
+        self.annual_new_builds = annual_new_builds
 
         super().__init__(UnorderedSpace())
 
@@ -266,6 +266,7 @@ def create_and_run_simulation(
     ],
     heat_pump_installer_count: int,
     heat_pump_installer_annual_growth_rate: float,
+    awareness_influence_threshold: int,
     annual_new_builds: Dict[int, int],
 ):
 
@@ -284,6 +285,7 @@ def create_and_run_simulation(
         air_source_heat_pump_price_discount_schedule=air_source_heat_pump_price_discount_schedule,
         heat_pump_installer_count=heat_pump_installer_count,
         heat_pump_installer_annual_growth_rate=heat_pump_installer_annual_growth_rate,
+        awareness_influence_threshold=awareness_influence_threshold,
         annual_new_builds=annual_new_builds,
     )
 
@@ -294,9 +296,13 @@ def create_and_run_simulation(
         all_agents_heat_pump_suitable,
     )
 
+    logger.info("Create model", threshold = model.awareness_influence_threshold, lookahead = household_num_lookahead_years)
+
     model.add_agents(households)
 
     agent_collectors = get_agent_collectors(model)
     model_collectors = get_model_collectors(model)
 
     return model.run(time_steps, agent_collectors, model_collectors)
+
+
