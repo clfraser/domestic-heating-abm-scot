@@ -450,10 +450,10 @@ class Household(Agent):
         for neighbour in self.neighbours:
             if neighbour.is_heat_pump_aware:
                 neighbours_heat_pump_aware.append(neighbour)
-        neighbour_heat_pump_aware_percent = len(neighbours_heat_pump_aware) / len(self.neighbours) if len(self.neighbours) > 0 else 0
+        number_neighbours_heat_pump_aware = len(neighbours_heat_pump_aware)
 
-        # If the household is not heat pump aware, and the percentage of neighbours who are heat pump aware is greater than or equal to 0.5, then the household becomes heat pump aware
-        if not self.is_heat_pump_aware and neighbour_heat_pump_aware_percent >= 0.5:
+        # If the household is not heat pump aware, and the number of neighbours who are heat pump aware is greater or equal to the threshold, then the household becomes heat pump aware
+        if not self.is_heat_pump_aware and number_neighbours_heat_pump_aware >= model.awareness_influence_threshold:
             self.is_heat_pump_aware
 
         if not is_gas_oil_boiler_ban_announced:

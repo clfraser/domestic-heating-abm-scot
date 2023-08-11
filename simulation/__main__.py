@@ -37,6 +37,11 @@ def parse_args(args=None):
         if 0 <= float(value) <= 1:
             return float(value)
         raise ValueError(f"Value must be between 0 and 1, got {value}")
+    
+    def int_between_0_and_11(value: str):
+        if 0 <= int(value) <= 11:
+            return int(value)
+        raise ValueError(f"Value must be between 0 and 11, got {value}")
 
     def map_string_to_intervention_type_enum(intervention):
         return InterventionType[intervention.upper()]
@@ -165,6 +170,13 @@ def parse_args(args=None):
         type=convert_to_datetime,
     )
 
+    parser.add_argument(
+        "--awareness-influence-threshold",
+        type=int_between_0_and_11,
+        default=2,
+        help="A value between 0 and 11 for the number of neighbours who must be aware of heat pumps for the agent to be aware of them too.",
+    )
+
     # SOURCE: Default values from https://energysavingtrust.org.uk/about-us/our-data/ (England, Scotland and Wales)
     # These fuel prices were last updated in November 2021, based on predicted fuel prices for 2022
     parser.add_argument("--price-gbp-per-kwh-gas", type=float, default=0.0465)
@@ -217,6 +229,7 @@ if __name__ == "__main__":
             args.air_source_heat_pump_price_discount_date,
             args.heat_pump_installer_count,
             args.heat_pump_installer_annual_growth_rate,
+            args.awareness_influence_threshold,
             ENGLAND_WALES_ANNUAL_NEW_BUILDS if args.include_new_builds else None,
         )
 

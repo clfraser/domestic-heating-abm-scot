@@ -47,6 +47,7 @@ class DomesticHeatingABM(AgentBasedModel):
         heat_pump_installer_count: int,
         heat_pump_installer_annual_growth_rate: float,
         annual_new_builds: Optional[Dict[int, int]],
+        awareness_influence_threshold: int,
     ):
         self.start_datetime = start_datetime
         self.step_interval = step_interval
@@ -73,7 +74,8 @@ class DomesticHeatingABM(AgentBasedModel):
             heat_pump_installer_annual_growth_rate
         )
         self.heat_pump_installations_at_current_step = 0
-        self.annual_new_builds = annual_new_builds
+        self.annual_new_builds = annual_new_builds,
+        self.awareness_influence_threshold = self.awareness_influence_threshold
 
         super().__init__(UnorderedSpace())
 
