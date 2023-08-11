@@ -233,8 +233,8 @@ if __name__ == "__main__":
             ENGLAND_WALES_ANNUAL_NEW_BUILDS if args.include_new_builds else None,
         )
 
-       # with smart_open.open(args.history_file, "w") as file:
-       #     write_jsonlines(history, file)
+        with smart_open.open(args.history_file, "w") as file:
+            write_jsonlines(history, file)
 
         installations = [];
 
