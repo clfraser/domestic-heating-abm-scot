@@ -5,6 +5,9 @@ from abm import collect_when
 from simulation.agents import Household
 from simulation.constants import Element, HeatingFuel, HeatingSystem
 
+import structlog
+logger = structlog.getLogger()
+
 if TYPE_CHECKING:
     from simulation.model import DomesticHeatingABM
 
@@ -242,6 +245,28 @@ def household_heating_system_costs_insulation_heat_pump_ground_source(household)
         HeatingSystem.HEAT_PUMP_GROUND_SOURCE
     )
 
+def household_weight_boiler_gas(household) -> float:
+    return household.weights.get(HeatingSystem.BOILER_GAS, float("nan"))
+
+
+def household_weight_boiler_electric(household) -> float:
+    return household.weights.get(HeatingSystem.BOILER_ELECTRIC, float("nan"))
+
+
+def household_weight_boiler_oil(household) -> float:
+    return household.weights.get(HeatingSystem.BOILER_OIL, float("nan"))
+
+
+def household_weight_heat_pump_air_source(household) -> float:
+    return household.weights.get(
+        HeatingSystem.HEAT_PUMP_AIR_SOURCE, float("nan")
+    )
+
+
+def household_weight_heat_pump_ground_source(household) -> float:
+    return household.weights.get(
+        HeatingSystem.HEAT_PUMP_GROUND_SOURCE, float("nan")
+    )
 
 def household_boiler_upgrade_grant_used(household) -> int:
     return household.boiler_upgrade_grant_used
@@ -305,7 +330,7 @@ def get_agent_collectors(
         collect_when(model, is_first_timestep)(household_wealth_percentile),
         collect_when(model, is_first_timestep)(household_discount_rate),
         collect_when(model, is_first_timestep)(household_renovation_budget),
-        collect_when(model, is_first_timestep)(household_is_heat_pump_suitable),
+        household_is_heat_pump_suitable,
         household_is_heat_pump_aware,
         household_heating_system,
         household_heating_system_previous,
@@ -342,9 +367,13 @@ def get_agent_collectors(
         household_heating_system_costs_insulation_boiler_oil,
         household_heating_system_costs_insulation_heat_pump_air_source,
         household_heating_system_costs_insulation_heat_pump_ground_source,
+        household_weight_boiler_gas,
+        household_weight_boiler_electric,
+        household_weight_boiler_oil,
+        household_weight_heat_pump_air_source,
+        household_weight_heat_pump_ground_source,
         household_boiler_upgrade_grant_used,
     ]
-
 
 def get_model_collectors(
     model: "DomesticHeatingABM",
