@@ -1,3 +1,6 @@
+import faulthandler
+faulthandler.enable()
+
 import argparse
 import datetime
 import os

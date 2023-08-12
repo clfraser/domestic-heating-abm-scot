@@ -306,7 +306,7 @@ def get_agent_collectors(
         collect_when(model, is_first_timestep)(household_discount_rate),
         collect_when(model, is_first_timestep)(household_renovation_budget),
         collect_when(model, is_first_timestep)(household_is_heat_pump_suitable),
-        collect_when(model, is_first_timestep)(household_is_heat_pump_aware),
+        household_is_heat_pump_aware,
         household_heating_system,
         household_heating_system_previous,
         household_heating_functioning,
