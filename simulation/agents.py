@@ -158,6 +158,7 @@ class Household(Agent):
         #logger.info("Neighbours in agent", neighbours = neighbours)
 
         self.neighbour_ids = neighbours.split(',') if neighbours else []
+        self.weights = {}
 
         # Household investment decision attributes
         self.is_renovating = False
@@ -528,8 +529,8 @@ class Household(Agent):
     ):
 
         weights = []
-        normalised_weights = []
-        neighbours_weight = []
+        # normalised_weights = []
+        # neighbours_weight = []
         multiple_cap = 50  # An arbitrary cap to prevent math.exp overflowing
 
         for heating_system in costs.keys():
@@ -540,6 +541,9 @@ class Household(Agent):
             if self.is_heating_system_hassle(heating_system):
                 weight *= 1 - heating_system_hassle_factor
             weights.append(weight)
+
+        # Set self.weights as a dictionary with the weights for each heating system
+        self.weights = dict(zip(costs.keys(),weights))
 
 #            # count neighbours where neighbours.heating_system = heating_system
 #            neighbours_with_heating_system = [n for n in self.neighbours if n.heating_system == heating_system]
