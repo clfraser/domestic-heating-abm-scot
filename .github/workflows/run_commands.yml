@@ -24,7 +24,7 @@ jobs:
       
       - run: |
           pipenv run python -m simulation"./input/scottish_stratified_sample_1.parquet"  "./scot_sc1_${{ matrix.args }}.jsonl.gz"    --air-source-heat-pump-price-discount-date 2023-01-01:0.3 
-      -run: |
+      - run: |
           python convert_history_to_dataframes_for_github_actions.py ${{ matrix.args }}
       - name: Archive code coverage results
         uses: actions/upload-artifact@v3

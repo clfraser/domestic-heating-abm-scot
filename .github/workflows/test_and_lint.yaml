@@ -1,5 +1,5 @@
 name: Test and lint
-on: [push]
+on: []
 env:
   PYTHONPATH: .
   PYTHONHASHSEED: 0

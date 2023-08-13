@@ -1,5 +1,5 @@
 name: Containers
-on: [push]
+on: []
 env:
   ARTIFACT_REGISTRY: ${{ secrets.GCP_ARTIFACT_REGISTRY }}
 jobs:
