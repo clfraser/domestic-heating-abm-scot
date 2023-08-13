@@ -9,7 +9,10 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        args:
+        parameters:
+        - 1
+        - 2
+        run:
         - 1
         - 2
     steps:
@@ -22,13 +25,23 @@ jobs:
       - run: pipenv sync --dev
       
       - run: |
-          pipenv run python -m simulation "./input/scottish_stratified_sample_1_with_network.parquet"  "./scot_sc1_${{ matrix.args }}.jsonl.gz"    --air-source-heat-pump-price-discount-date 2023-01-01:0.3 
-      - run: |
-          pipenv run python convert_history_to_dataframes_for_github_actions.py ${{ matrix.args }}
-      - name: Archive results
-        uses: actions/upload-artifact@v3
-        with:
-          name: scot_sc1_results
-          path: |
-            ./scot_sc1_${{ matrix.args }}_agent_history.feather
-            ./scot_sc1_${{ matrix.args }}_model_history.feather
+          a="${{matrix.parameters}}"
+
+          declare -A lookup
+
+          lookup["1"]="2023-01-01:0.3"
+          lookup["2"]="2024-01-01:0.3"
+          lookup["3"]="2025-01-01:0.3"
+          theDate=${lookup[$a]}
+          echo $theDate
+
+        #  pipenv run python -m simulation "./input/scottish_stratified_sample_1_with_network.parquet"  "./scot_sc1_${{ matrix.parameters }}_${{ matrix.run }}.jsonl.gz"    --air-source-heat-pump-price-discount-date $theDate
+      # - run: |
+      #     pipenv run python convert_history_to_dataframes_for_github_actions.py ${{ matrix.parameters }} ${{ matrix.run }}
+      # - name: Archive results
+      #   uses: actions/upload-artifact@v3
+      #   with:
+      #     name: scot_sc1_results
+      #     path: |
+      #       ./scot_sc1_${{ matrix.parameters }}_${{ matrix.run }}_agent_history.feather
+      #       ./scot_sc1_${{ matrix.parameters }}_${{ matrix.run }}_model_history.feather
