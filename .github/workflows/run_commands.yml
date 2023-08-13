@@ -1,0 +1,33 @@
+name: Run commands
+on: [push]
+
+env:
+  PYTHONPATH: .
+
+jobs:
+  run_commands:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        args:
+        - 1
+        - 2
+        - 3
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        id: setup-python
+        with:
+          python-version: "3.9"
+      - run: pip install pipenv
+      - run: pipenv sync --dev
+      
+      - run: |
+          pipenv run python -m simulation"./input/scottish_stratified_sample_1.parquet"  "./scot_sc1_${{ matrix.args }}.jsonl.gz"    --air-source-heat-pump-price-discount-date 2023-01-01:0.3 
+      -run: |
+          python convert_history_to_dataframes_for_github_actions.py ${{ matrix.args }}
+      - name: Archive code coverage results
+        uses: actions/upload-artifact@v3
+        with:
+          name: code-coverage-report
+          path: output/test/file${{ matrix.args }}.jsonl.gz
