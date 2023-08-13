@@ -431,7 +431,6 @@ def get_agent_collectors(
         household_heating_system_costs_insulation_boiler_oil,
         household_heating_system_costs_insulation_heat_pump_air_source,
         household_heating_system_costs_insulation_heat_pump_ground_source,
-        household_boiler_upgrade_grant_used,
         household_cost_weight_boiler_gas,
         household_cost_weight_boiler_electric,
         household_cost_weight_boiler_oil,
@@ -452,6 +451,7 @@ def get_agent_collectors(
         household_combined_weight_boiler_oil,
         household_combined_weight_heat_pump_air_source,
         household_combined_weight_heat_pump_ground_source,
+        household_boiler_upgrade_grant_used,
     ]
 
 
