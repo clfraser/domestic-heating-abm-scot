@@ -516,7 +516,7 @@ class Household(Agent):
         return unit_and_install_costs, fuel_costs_net_present_value, -subsidies
 
     def choose_heating_system(
-        self, costs: Dict[HeatingSystem, float], heating_system_hassle_factor: float
+        self, costs: Dict[HeatingSystem, float], heating_system_hassle_factor: float, model: "DomesticHeatingABM"
     ):
 
         cost_weights = []
@@ -544,7 +544,7 @@ class Household(Agent):
 
             # If the heating system is a heat pump, add the neighbour weight to the heat pump weight
             if heating_system in HEAT_PUMPS:
-               combined_weights = [w + n for w, n in zip(normalised_weights, neighbours_weight)]
+               combined_weights = [((1 - model.social_influence_importance) * w) + (model.social_influence_importance * n) for w, n in zip(normalised_weights, neighbours_weight)]
             else:
                 combined_weights = normalised_weights
 
@@ -699,7 +699,7 @@ class Household(Agent):
             }
 
             chosen_heating_system = self.choose_heating_system(
-                heating_system_replacement_costs, model.heating_system_hassle_factor
+                heating_system_replacement_costs, model.heating_system_hassle_factor, model
             )
 
             self.install_heating_system(chosen_heating_system, model)
