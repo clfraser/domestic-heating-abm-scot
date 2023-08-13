@@ -564,8 +564,6 @@ class Household(Agent):
         if all([w < threshold_weight for w in weights]):
             return self.heating_system
 
-        logger.info("Weights", weights = weights)
-
         return random.choices(list(costs.keys()), weights)[0]
 
     def install_heating_system(
