@@ -11,15 +11,6 @@ jobs:
       matrix:
         run:
         - 1
-        - 2
-        - 3
-        - 4
-        - 5
-        - 6
-        - 7
-        - 8
-        - 9
-        - 10
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
@@ -51,6 +42,12 @@ jobs:
 
       - run: |
           pipenv run python convert_history_to_dataframes_for_github_actions.py ${{ matrix.run }}
+      - name: Archive results
+        uses: actions/upload-artifact@v3
+        with:
+          name: scot_sc1_jsonl
+          path: |
+            ./scot_sc1_${{ matrix.run }}.jsonl.gz
       - name: Archive results
         uses: actions/upload-artifact@v3
         with:
