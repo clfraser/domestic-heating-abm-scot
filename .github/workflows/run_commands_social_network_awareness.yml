@@ -1,0 +1,80 @@
+name: Run commands social network influence importance
+on: [push, workflow_dispatch]
+
+env:
+  PYTHONPATH: .
+
+jobs:
+  run_commands:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        parameters:
+        - 1
+        - 2
+        - 3
+        - 4
+        - 5
+        - 6
+        - 7
+        - 8
+        - 9
+        - 10
+        run:
+        - 1
+        - 2
+        - 3
+        - 4
+        - 5
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        id: setup-python
+        with:
+          python-version: "3.9"
+      - run: pip install pipenv
+      - run: pipenv sync --dev
+      
+      - run: |
+          a="${{matrix.parameters}}"
+
+          declare -A lookup
+
+          lookup["1"]="0.248367631"
+          lookup["2"]="0.116291844"
+          lookup["3"]="0.006680517"
+          lookup["4"]="0.025334758"
+          lookup["5"]="0.071742271"
+          lookup["6"]="0.212052003"
+          lookup["7"]="0.187338533"
+          lookup["8"]="0.145684333"
+          lookup["9"]="0.094855997"
+          lookup["10"]="0.168092774"
+          theAwareness=${lookup[$a]}
+          echo $theAwareness
+
+          b="${{matrix.parameters}}"
+
+          declare -A lookupB
+
+          lookupB["1"]="2"
+          lookupB["2"]="1"
+          lookupB["3"]="10"
+          lookupB["4"]="4"
+          lookupB["5"]="6"
+          lookupB["6"]="3"
+          lookupB["7"]="7"
+          lookupB["8"]="6"
+          lookupB["9"]="11"
+          lookupB["10"]="9"
+          theThreshold=${lookupB[$b]}
+          echo $theThreshold
+
+          pipenv run python -m simulation "./input/scottish_stratified_sample_1_with_network_half.parquet"  "./awareness_lhs_${{ matrix.parameters }}_${{ matrix.run }}.jsonl.gz"   --intervention rhi --start-date 2012-01-01 --steps 96 --heat-pump-installer-annual-growth-rate 0 --heat-pump-awareness $theAwareness --awareness-influence-threshold $theThreshold
+      - name: Archive results
+        uses: actions/upload-artifact@v3
+        with:
+          name: awareness_lhs_results
+          path: |
+            ./awareness_lhs_${{ matrix.parameters }}_${{ matrix.run }}.jsonl.gz
+          if-no-files-found: error
