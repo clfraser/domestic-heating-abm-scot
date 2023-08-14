@@ -62,5 +62,5 @@ jobs:
         with:
           name: influence_importance_lhs_results
           path: |
-            ./scot_sc1_${{ matrix.parameters }}_${{ matrix.run }}_agent_history.feather
-            ./scot_sc1_${{ matrix.parameters }}_${{ matrix.run }}_model_history.feather
+            ./influence_importance_lhs_${{ matrix.parameters }}_${{ matrix.run }}_agent_history.feather
+            ./influence_importance_lhs_${{ matrix.parameters }}_${{ matrix.run }}_model_history.feather
