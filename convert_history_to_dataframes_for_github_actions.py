@@ -10,7 +10,7 @@ from abm import (read_jsonlines, history_to_dataframes)
 import pyarrow.feather as feather
 
 # Set filename where JSON results file is stored
-filename = "./scot_sc1_" + sys.argv[1] + ".jsonl.gz"
+filename = "./influence_importance_lhs_" + sys.argv[1] + "_" + sys.argv[2] + ".jsonl.gz"
 
 # Open file and use the read_jsonlines function defined in abm.py to read the JSON file
 #with open(filename, "r") as file:
@@ -23,5 +23,5 @@ with gzip.open(filename, mode="r") as file:
 agent_history_df, model_history_df = history_to_dataframes(history)
 
 # Save both dataframes as feather format, to read into R
-feather.write_feather(agent_history_df, "./scot_sc1_" + sys.argv[1] + "_agent_history.feather")
-feather.write_feather(model_history_df, "./scot_sc1_" + sys.argv[1] + "_model_history.feather")
+feather.write_feather(agent_history_df, "./influence_importance_lhs_" + sys.argv[1] + "_" + sys.argv[2] + "_agent_history.feather")
+feather.write_feather(model_history_df, "./influence_importance_lhs_" + sys.argv[1] + "_" + sys.argv[2] + "_model_history.feather")
