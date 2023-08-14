@@ -1,4 +1,4 @@
-name: Run commands
+name: Run commands social network influence importance
 on: [push]
 
 env:
