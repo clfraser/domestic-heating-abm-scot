@@ -45,16 +45,3 @@ jobs:
           name: scot_sc1_jsonl
           path: |
             ./scot_sc1_${{ matrix.run }}.jsonl.gz
-      - name: Set Swap Space
-        uses: pierotofy/set-swap-space@master
-        with:
-          swap-size-gb: 10
-      - run: |
-          pipenv run python convert_history_to_dataframes_for_github_actions.py ${{ matrix.run }}
-      - name: Archive results
-        uses: actions/upload-artifact@v3
-        with:
-          name: scot_sc1_results
-          path: |
-            ./scot_sc1_${{ matrix.run }}_agent_history.feather
-            ./scot_sc1_${{ matrix.run }}_model_history.feather
