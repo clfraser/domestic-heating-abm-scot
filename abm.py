@@ -132,8 +132,10 @@ def read_jsonlines(file: TextIO) -> History:
         yield tuple(json.loads(line))  # type: ignore
 
 
-def history_to_dataframes(history: History) -> Tuple[pd.DataFrame, pd.DataFrame]:
+def agent_history_to_dataframes(history: History) -> pd.DataFrame:
     agent_history, model_history = zip(*history)
+
+    del model_history
 
     flattened_agent_history = []
     for step, agents in enumerate(agent_history):
@@ -141,7 +143,14 @@ def history_to_dataframes(history: History) -> Tuple[pd.DataFrame, pd.DataFrame]
             flattened_agent_history.append({"step": step, **agent})
 
     agent_history_df = pd.DataFrame(flattened_agent_history)
+    return agent_history_df
+
+def model_history_to_dataframes(history: History) -> pd.DataFrame:
+    agent_history, model_history = zip(*history)
+
+    del agent_history
+
     model_history_df = (
         pd.DataFrame(model_history).reset_index().rename({"index": "step"}, axis=1)
     )
-    return agent_history_df, model_history_df
+    return model_history_df

@@ -4,7 +4,7 @@ import gzip
 import sys
 
 # Import funcitions from abm.py script
-from abm import (read_jsonlines, history_to_dataframes)
+from abm import (read_jsonlines, agent_history_to_dataframes, model_history_to_dataframes)
 
 # Import package to write to feather (a format that allows interoperability between R and Python)
 import pyarrow.feather as feather
@@ -20,7 +20,8 @@ with gzip.open(filename, mode="r") as file:
     history = list(read_jsonlines(file))
 
 # Use the history_to_dataframes function defined in abm.py to convert the history to dataframes
-agent_history_df, model_history_df = history_to_dataframes(history)
+agent_history_df = agent_history_to_dataframes(history)
+model_history_df = model_history_to_dataframes(history)
 
 # Save both dataframes as feather format, to read into R
 feather.write_feather(agent_history_df, "./scot_sc1_" + sys.argv[1] + "_agent_history.feather")
