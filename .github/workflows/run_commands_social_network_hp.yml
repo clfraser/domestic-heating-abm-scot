@@ -1,5 +1,5 @@
 name: Run commands social network influence importance
-on: [push]
+on: [push, workflow_dispatch]
 
 env:
   PYTHONPATH: .
@@ -60,4 +60,5 @@ jobs:
         with:
           name: influence_importance_lhs_results
           path: |
-            "./influence_importance_lhs_${{ matrix.parameters }}_${{ matrix.run }}.jsonl.gz" 
+            ./influence_importance_lhs_${{ matrix.parameters }}_${{ matrix.run }}.jsonl.gz
+          if-no-files-found: error
