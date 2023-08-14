@@ -157,7 +157,6 @@ class Household(Agent):
 
         # Decision attributes
         self.cost_weights = {}
-        self.normalised_weights = {}
         self.combined_weights = {}
         self.neighbour_weights = {}
 
@@ -520,7 +519,6 @@ class Household(Agent):
     ):
 
         cost_weights = []
-        normalised_weights = []
         neighbours_weight = []
         combined_weights = []
         multiple_cap = 50  # An arbitrary cap to prevent math.exp overflowing
@@ -539,21 +537,14 @@ class Household(Agent):
             neighbour_weight = len(neighbours_with_heating_system) / len(self.neighbours) if len(self.neighbours) > 0 else 0
             neighbours_weight.append(neighbour_weight)
 
-            # Normalise weights by dividing them by the largest weight
-            normalised_weights = [w / max(cost_weights) for w in cost_weights]
-
             # If the heating system is a heat pump, add the neighbour weight to the heat pump weight
             if heating_system in HEAT_PUMPS:
-               combined_weights = [((1 - model.social_influence_importance) * w) + (model.social_influence_importance * n) for w, n in zip(normalised_weights, neighbours_weight)]
+               combined_weights = [((1 - model.social_influence_importance) * w) + (model.social_influence_importance * n) for w, n in zip(cost_weights, neighbours_weight)]
             else:
-                combined_weights = normalised_weights
-
-        #logger.info("Decision weights", id = self.id, heating_system = heating_system, combined_weights = combined_weights, weights = weights,
-        #    normalised_weights = normalised_weights, neighbours_weight = neighbours_weight)
+                combined_weights = cost_weights
 
         # Add weights to self as dictionaries so they can be included in the collectors
         self.cost_weights = dict(zip(costs, cost_weights))
-        self.normalised_weights = dict(zip(costs, normalised_weights))
         self.neighbour_weights = dict(zip(costs, neighbours_weight))
         self.combined_weights = dict(zip(costs, combined_weights))
 

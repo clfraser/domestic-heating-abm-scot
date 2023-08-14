@@ -265,29 +265,6 @@ def household_cost_weight_heat_pump_ground_source(household) -> float:
         HeatingSystem.HEAT_PUMP_GROUND_SOURCE, float("nan")
     )
 
-def household_normalised_weight_boiler_gas(household) -> float:
-    return household.normalised_weights.get(HeatingSystem.BOILER_GAS, float("nan"))
-
-
-def household_normalised_weight_boiler_electric(household) -> float:
-    return household.normalised_weights.get(HeatingSystem.BOILER_ELECTRIC, float("nan"))
-
-
-def household_normalised_weight_boiler_oil(household) -> float:
-    return household.normalised_weights.get(HeatingSystem.BOILER_OIL, float("nan"))
-
-
-def household_normalised_weight_heat_pump_air_source(household) -> float:
-    return household.normalised_weights.get(
-        HeatingSystem.HEAT_PUMP_AIR_SOURCE, float("nan")
-    )
-
-
-def household_normalised_weight_heat_pump_ground_source(household) -> float:
-    return household.normalised_weights.get(
-        HeatingSystem.HEAT_PUMP_GROUND_SOURCE, float("nan")
-    )
-
 def household_neighbours_weight_boiler_gas(household) -> float:
     return household.neighbour_weights.get(HeatingSystem.BOILER_GAS, float("nan"))
 
@@ -394,7 +371,7 @@ def get_agent_collectors(
         collect_when(model, is_first_timestep)(household_wealth_percentile),
         collect_when(model, is_first_timestep)(household_discount_rate),
         collect_when(model, is_first_timestep)(household_renovation_budget),
-        collect_when(model, is_first_timestep)(household_is_heat_pump_suitable),
+        household_is_heat_pump_suitable,
         household_is_heat_pump_aware,
         household_heating_system,
         household_heating_system_previous,
@@ -436,11 +413,6 @@ def get_agent_collectors(
         household_cost_weight_boiler_oil,
         household_cost_weight_heat_pump_air_source,
         household_cost_weight_heat_pump_ground_source,
-        household_normalised_weight_boiler_gas,
-        household_normalised_weight_boiler_electric,
-        household_normalised_weight_boiler_oil,
-        household_normalised_weight_heat_pump_air_source,
-        household_normalised_weight_heat_pump_ground_source,
         household_neighbours_weight_boiler_gas,
         household_neighbours_weight_boiler_electric,
         household_neighbours_weight_boiler_oil,
