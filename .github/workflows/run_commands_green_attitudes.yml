@@ -53,7 +53,7 @@ jobs:
           theInfluence=${lookup[$a]}
           echo $theInfluence
 
-            pipenv run python -m simulation "./input/scottish_stratified_sample_1_with_network_half.parquet"  "./green_attitudes_lhs_${{matrix.parameters}}_${{matrix.run}}.jsonl.gz"  --intervention rhi --start-date 2012-01-01 --steps 96 --heat-pump-installer-annual-growth-rate 0 --green_attitudes_influence $theInfluence
+            pipenv run python -m simulation "./input/scottish_stratified_sample_1_with_network_half.parquet"  "./green_attitudes_lhs_${{matrix.parameters}}_${{matrix.run}}.jsonl.gz"  --intervention rhi --start-date 2012-01-01 --steps 96 --heat-pump-installer-annual-growth-rate 0 --green-attitudes-influence $theInfluence
       - name: Archive jsonl
         uses: actions/upload-artifact@v3
         with:
