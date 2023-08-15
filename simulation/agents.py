@@ -142,7 +142,8 @@ class Household(Agent):
 
         # Green attitudes
         self.green_attitudes = green_attitudes
-        self.normalised_weights = {}
+        self.cost_weights = {}
+        self.combined_weights = {}
 
         # Heating / energy performance attributes
         self.is_off_gas_grid = is_off_gas_grid
@@ -515,7 +516,8 @@ class Household(Agent):
         self, costs: Dict[HeatingSystem, float], heating_system_hassle_factor: float, model: "DomesticHeatingABM"
     ):
 
-        weights = []
+        cost_weights = []
+        combined_weights = []
         multiple_cap = 50  # An arbitrary cap to prevent math.exp overflowing
 
         for heating_system in costs.keys():
@@ -525,23 +527,22 @@ class Household(Agent):
             weight = 1 / math.exp(cost_as_proportion_of_budget)
             if self.is_heating_system_hassle(heating_system):
                 weight *= 1 - heating_system_hassle_factor
-            weights.append(weight)
+            cost_weights.append(weight)
 
-        # Create a dictionary with weights for each heating system
-        weights_dict = dict(zip(costs.keys(), weights))
-
-        for heating_system in costs.keys():
-          if self.green_attitudes and heating_system in HEAT_PUMPS:
-            weights_dict[heating_system] *= model.green_attitudes_influence
+            if self.green_attitudes and heating_system in HEAT_PUMPS:
+               combined_weights = [((1 - model.green_attitudes_influence) * w) + model.green_attitudes_influence for w in cost_weights]
+            else:
+                combined_weights = cost_weights
         
-        self.weights = weights_dict
+        self.cost_weights = dict(zip(costs.keys(), cost_weights))
+        self.combined_weights = dict(zip(costs.keys(), combined_weights))
            
         #  Households for which all options are highly unaffordable (x10 out of budget) "repair" their existing heating system
         threshold_weight = 1 / math.exp(10)
-        if all([w < threshold_weight for w in weights]):
+        if all([w < threshold_weight for w in cost_weights]):
             return self.heating_system
 
-        return random.choices(list(costs.keys()), weights_dict.values())[0]
+        return random.choices(list(costs.keys()), combined_weights)[0]
 
     def install_heating_system(
         self, heating_system: HeatingSystem, model: "DomesticHeatingABM"

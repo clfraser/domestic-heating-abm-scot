@@ -40,16 +40,16 @@ jobs:
 
           declare -A lookup
 
-          lookup["1"]="92.139148"
-          lookup["2"]="42.347912"
-          lookup["3"]="7.801526"
-          lookup["4"]="14.702627"
-          lookup["5"]="28.421430"
-          lookup["6"]="85.127222"
-          lookup["7"]="77.404423"
-          lookup["8"]="60.319870"
-          lookup["9"]="34.462348"
-          lookup["10"]="68.096708"
+          lookup["1"]="0.92059746"
+          lookup["2"]="0.41765568"
+          lookup["3"]="0.06870228"
+          lookup["4"]="0.13841037"
+          lookup["5"]="0.27698414"
+          lookup["6"]="0.84976992"
+          lookup["7"]="0.77176185"
+          lookup["8"]="0.59919061"
+          lookup["9"]="0.33800352"
+          lookup["10"]="0.67774452"
           theInfluence=${lookup[$a]}
           echo $theInfluence
 
