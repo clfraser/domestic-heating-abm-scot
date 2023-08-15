@@ -383,7 +383,9 @@ class Household(Agent):
                 self.windows_energy_efficiency = 5
 
         n_measures = len(insulation_elements)
-        improved_epc_level = self.epc_rating.value + n_measures
+        improved_epc_level = min(
+            self.epc_rating.value + n_measures, 6
+        ) # Allow all agents to go up to an EPC value A
         
         self.epc_rating = EPCRating(improved_epc_level)
 
