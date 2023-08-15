@@ -383,9 +383,8 @@ class Household(Agent):
                 self.windows_energy_efficiency = 5
 
         n_measures = len(insulation_elements)
-        improved_epc_level = min(
-            self.epc_rating.value + n_measures, self.potential_epc_rating.value
-        )
+        improved_epc_level = self.epc_rating.value + n_measures
+        
         self.epc_rating = EPCRating(improved_epc_level)
 
     def get_chosen_insulation_costs(self, event_trigger: EventTrigger):
