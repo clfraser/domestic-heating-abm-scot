@@ -167,7 +167,7 @@ def parse_args(args=None):
 
     parser.add_argument(
         "--green-attitudes-influence",
-        default=0.5,
+        default=5,
         type=float,
     )
 

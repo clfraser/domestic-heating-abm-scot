@@ -512,7 +512,7 @@ class Household(Agent):
         return unit_and_install_costs, fuel_costs_net_present_value, -subsidies
 
     def choose_heating_system(
-        self, costs: Dict[HeatingSystem, float], heating_system_hassle_factor: float
+        self, costs: Dict[HeatingSystem, float], heating_system_hassle_factor: float, model: "DomesticHeatingABM"
     ):
 
         weights = []
@@ -531,10 +531,8 @@ class Household(Agent):
         weights_dict = dict(zip(costs.keys(), weights))
 
         for heating_system in costs.keys():
-          if self.green_attitudes:
-            # Increase normalised weight
-            if heating_system in HEAT_PUMPS:
-                combined_weights = [((1 - model.green_attitudes_importance) * w) + (model.green_attitudes_importance * w) for w, n in zip(cost_weights, neighbours_weight)]
+          if self.green_attitudes and heating_system in HEAT_PUMPS:
+            weights_dict[heating_system] *= model.green_attitudes_influence
         
         self.weights = weights_dict
            
@@ -657,7 +655,7 @@ class Household(Agent):
             }
 
             chosen_heating_system = self.choose_heating_system(
-                heating_system_replacement_costs, model.heating_system_hassle_factor
+                heating_system_replacement_costs, model.heating_system_hassle_factor, model
             )
 
             self.install_heating_system(chosen_heating_system, model)

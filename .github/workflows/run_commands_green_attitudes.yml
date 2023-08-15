@@ -1,0 +1,62 @@
+name: Run commands green attitudes
+on: [push]
+
+env:
+  PYTHONPATH: .
+
+jobs:
+  run_commands:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        parameters:
+          - 1
+          - 2
+          - 3
+          - 4
+          - 5
+          - 6
+          - 7
+          - 8
+          - 9
+          - 10 
+        run:
+          - 1
+          - 2
+          - 3
+          - 4
+          - 5
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        id: setup-python
+        with:
+          python-version: "3.9"
+      - run: pip install pipenv
+      - run: pipenv sync --dev
+      
+      - run: |
+          a="${{matrix.parameters}}"
+
+          declare -A lookup
+
+          lookup["1"]="92.139148"
+          lookup["2"]="42.347912"
+          lookup["3"]="7.801526"
+          lookup["4"]="14.702627"
+          lookup["5"]="28.421430"
+          lookup["6"]="85.127222"
+          lookup["7"]="77.404423"
+          lookup["8"]="60.319870"
+          lookup["9"]="34.462348"
+          lookup["10"]="68.096708"
+          theInfluence=${lookup[$a]}
+          echo $theInfluence
+
+            pipenv run python -m simulation "./input/scottish_stratified_sample_1_with_network_half.parquet"  "./green_attitudes_lhs_${{matrix.parameters}}_${{matrix.run}}.jsonl.gz"  --intervention rhi --start-date 2012-01-01 --steps 96 --heat-pump-installer-annual-growth-rate 0 --green_attitudes_influence $theInfluence
+      - name: Archive jsonl
+        uses: actions/upload-artifact@v3
+        with:
+          name: green_attitudes_rhi_jsonl
+          path: |
+           ./green_attitudes_lhs_${{matrix.parameters}}_${{matrix.run}}.jsonl.gz

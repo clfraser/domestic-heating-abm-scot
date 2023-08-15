@@ -47,6 +47,7 @@ class DomesticHeatingABM(AgentBasedModel):
         heat_pump_installer_count: int,
         heat_pump_installer_annual_growth_rate: float,
         annual_new_builds: Optional[Dict[int, int]],
+        green_attitudes_influence: float,
     ):
         self.start_datetime = start_datetime
         self.step_interval = step_interval
@@ -73,7 +74,8 @@ class DomesticHeatingABM(AgentBasedModel):
             heat_pump_installer_annual_growth_rate
         )
         self.heat_pump_installations_at_current_step = 0
-        self.annual_new_builds = annual_new_builds
+        self.annual_new_builds = annual_new_builds,
+        self.green_attitudes_influence = green_attitudes_influence
 
         super().__init__(UnorderedSpace())
 
@@ -265,6 +267,7 @@ def create_and_run_simulation(
     heat_pump_installer_count: int,
     heat_pump_installer_annual_growth_rate: float,
     annual_new_builds: Dict[int, int],
+    green_attitudes_influence: float,
 ):
 
     model = DomesticHeatingABM(
@@ -283,6 +286,7 @@ def create_and_run_simulation(
         heat_pump_installer_count=heat_pump_installer_count,
         heat_pump_installer_annual_growth_rate=heat_pump_installer_annual_growth_rate,
         annual_new_builds=annual_new_builds,
+        green_attitudes_influence=green_attitudes_influence,
     )
 
     households = create_household_agents(
