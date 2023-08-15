@@ -516,7 +516,6 @@ class Household(Agent):
     ):
 
         weights = []
-        normalised_weights = []
         multiple_cap = 50  # An arbitrary cap to prevent math.exp overflowing
 
         for heating_system in costs.keys():
@@ -528,26 +527,23 @@ class Household(Agent):
                 weight *= 1 - heating_system_hassle_factor
             weights.append(weight)
 
-        # Normalise weights by dividing them by the largest weight
-        normalised_weights = [w / max(weights) for w in weights]
-
         # Create a dictionary with weights for each heating system
-        normalised_weights_dict = dict(zip(costs.keys(), normalised_weights))
+        weights_dict = dict(zip(costs.keys(), weights))
 
         for heating_system in costs.keys():
           if self.green_attitudes:
             # Increase normalised weight
             if heating_system in HEAT_PUMPS:
-                normalised_weights_dict[heating_system] *= 1.5
+                combined_weights = [((1 - model.green_attitudes_importance) * w) + (model.green_attitudes_importance * w) for w, n in zip(cost_weights, neighbours_weight)]
         
-        self.normalised_weights = normalised_weights_dict
+        self.weights = weights_dict
            
         #  Households for which all options are highly unaffordable (x10 out of budget) "repair" their existing heating system
         threshold_weight = 1 / math.exp(10)
         if all([w < threshold_weight for w in weights]):
             return self.heating_system
 
-        return random.choices(list(costs.keys()), normalised_weights_dict.values())[0]
+        return random.choices(list(costs.keys()), weights_dict.values())[0]
 
     def install_heating_system(
         self, heating_system: HeatingSystem, model: "DomesticHeatingABM"
