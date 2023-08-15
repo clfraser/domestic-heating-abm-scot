@@ -1,0 +1,58 @@
+name: Run commands no potential EPC
+on: [push]
+
+env:
+  PYTHONPATH: .
+
+jobs:
+  run_commands:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        run:
+          - 1
+          - 2
+          - 3
+          - 4
+          - 5
+          - 6
+          - 7
+          - 8
+          - 9
+          - 10 
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        id: setup-python
+        with:
+          python-version: "3.9"
+      - run: pip install pipenv
+      - run: pipenv sync --dev
+      
+      - run: |
+          a="${{matrix.run}}"
+
+          declare -A lookup
+
+          lookup["1"]="0.92059746"
+          lookup["2"]="0.41765568"
+          lookup["3"]="0.06870228"
+          lookup["4"]="0.13841037"
+          lookup["5"]="0.27698414"
+          lookup["6"]="0.84976992"
+          lookup["7"]="0.77176185"
+          lookup["8"]="0.59919061"
+          lookup["9"]="0.33800352"
+          lookup["10"]="0.67774452"
+          theInfluence=${lookup[$a]}
+          echo $theInfluence
+
+            pipenv run python -m simulation "./input/scottish_stratified_sample_1.parquet"  "./no_potential_epc_sc1_${{ matrix.run }}.jsonl.gz"    --air-source-heat-pump-price-discount-date 2023-01-01:0.3
+            pipenv run python -m simulation "./input/scottish_stratified_sample_1.parquet"  "./no_potential_epc_sc2_${{ matrix.run }}.jsonl.gz"    --intervention boiler_upgrade_scheme --intervention gas_oil_boiler_ban --gas-oil-boiler-ban-date 2035-01-01 --gas-oil-boiler-ban-announce-date 2025-01-01 --heat-pump-awareness 0.5 --air-source-heat-pump-price-discount-date 2023-01-01:0.3 --price-gbp-per-kwh-gas 0.0589 --price-gbp-per-kwh-electricity 0.1494
+      - name: Archive jsonl
+        uses: actions/upload-artifact@v3
+        with:
+          name: no_potential_epc_jsonl
+          path: |
+            ./no_potential_epc_sc1_${{ matrix.run }}.jsonl.gz
+            ./no_potential_epc_sc2_${{ matrix.run }}.jsonl.gz
