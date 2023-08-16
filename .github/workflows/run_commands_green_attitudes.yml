@@ -11,7 +11,7 @@ jobs:
       matrix:
         parameters:
           - 7
-          - 7
+          - 9
         run:
           - 1
           - 2
