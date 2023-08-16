@@ -74,7 +74,7 @@ class DomesticHeatingABM(AgentBasedModel):
             heat_pump_installer_annual_growth_rate
         )
         self.heat_pump_installations_at_current_step = 0
-        self.annual_new_builds = annual_new_builds,
+        self.annual_new_builds = annual_new_builds
         self.green_attitudes_influence = green_attitudes_influence
 
         super().__init__(UnorderedSpace())
