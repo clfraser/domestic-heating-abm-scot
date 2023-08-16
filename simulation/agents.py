@@ -251,7 +251,7 @@ class Household(Agent):
             if not all(
                 [
                     self.is_heat_pump_suitable_archetype,
-                    self.potential_epc_rating.value >= EPCRating.C.value,
+                    #self.potential_epc_rating.value >= EPCRating.C.value,
                 ]
             )
             else True
@@ -387,7 +387,7 @@ class Household(Agent):
 
         n_measures = len(insulation_elements)
         improved_epc_level = min(
-            self.epc_rating.value + n_measures, self.potential_epc_rating.value
+            self.epc_rating.value + n_measures, 6
         )
         self.epc_rating = EPCRating(improved_epc_level)
 
