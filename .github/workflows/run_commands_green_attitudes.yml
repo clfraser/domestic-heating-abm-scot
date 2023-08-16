@@ -10,6 +10,9 @@ jobs:
     strategy:
       matrix:
         parameters:
+          - 7
+          - 7
+        run:
           - 1
           - 2
           - 3
@@ -19,13 +22,7 @@ jobs:
           - 7
           - 8
           - 9
-          - 10 
-        run:
-          - 1
-          - 2
-          - 3
-          - 4
-          - 5
+          - 10
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
@@ -40,23 +37,17 @@ jobs:
 
           declare -A lookup
 
-          lookup["1"]="0.92059746"
-          lookup["2"]="0.41765568"
-          lookup["3"]="0.06870228"
-          lookup["4"]="0.13841037"
-          lookup["5"]="0.27698414"
-          lookup["6"]="0.84976992"
-          lookup["7"]="0.77176185"
-          lookup["8"]="0.59919061"
-          lookup["9"]="0.33800352"
-          lookup["10"]="0.67774452"
+          lookup["7"]="0.06870228"
+          lookup["9"]="0.9"
           theInfluence=${lookup[$a]}
           echo $theInfluence
 
-            pipenv run python -m simulation "./input/scottish_stratified_sample_1_with_network_half.parquet"  "./green_attitudes_lhs_${{matrix.parameters}}_${{matrix.run}}.jsonl.gz"  --intervention rhi --start-date 2012-01-01 --steps 96 --heat-pump-installer-annual-growth-rate 0 --green-attitudes-influence $theInfluence
+            pipenv run python -m simulation "./input/scottish_stratified_sample_1.parquet"  "./green_attitudes_sc1_${{matrix.parameters}}_${{matrix.run}}.jsonl.gz" --air-source-heat-pump-price-discount-date 2023-01-01:0.3 --green-attitudes-influence $theInfluence
+            pipenv run python -m simulation "./input/scottish_stratified_sample_1.parquet"  "./green_attitudes_sc2_${{matrix.parameters}}_${{matrix.run}}.jsonl.gz" --intervention boiler_upgrade_scheme --intervention gas_oil_boiler_ban --gas-oil-boiler-ban-date 2035-01-01 --gas-oil-boiler-ban-announce-date 2025-01-01 --heat-pump-awareness 0.5 --air-source-heat-pump-price-discount-date 2023-01-01:0.3 --price-gbp-per-kwh-gas 0.0589 --price-gbp-per-kwh-electricity 0.1494 --green-attitudes-influence $theInfluence
       - name: Archive jsonl
         uses: actions/upload-artifact@v3
         with:
           name: green_attitudes_rhi_jsonl
           path: |
-           ./green_attitudes_lhs_${{matrix.parameters}}_${{matrix.run}}.jsonl.gz
+           ./green_attitudes_sc1_${{matrix.parameters}}_${{matrix.run}}.jsonl.gz
+           ./green_attitudes_sc2_${{matrix.parameters}}_${{matrix.run}}.jsonl.gz
