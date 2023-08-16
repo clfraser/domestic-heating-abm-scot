@@ -1,4 +1,4 @@
-name: Run commands main
+name: Run commands no element energy efficiency
 on: [push]
 
 env:
@@ -47,12 +47,12 @@ jobs:
           theInfluence=${lookup[$a]}
           echo $theInfluence
 
-            pipenv run python -m simulation "./input/scottish_stratified_sample_1_with_network_half.parquet"  "./scot_sc1_social_network_baseline_${{ matrix.run }}.jsonl.gz"    --air-source-heat-pump-price-discount-date 2023-01-01:0.3
-            pipenv run python -m simulation "./input/scottish_stratified_sample_1_with_network_half.parquet"  "./scot_sc2_social_network_baseline_${{ matrix.run }}.jsonl.gz"    --intervention boiler_upgrade_scheme --intervention gas_oil_boiler_ban --gas-oil-boiler-ban-date 2035-01-01 --gas-oil-boiler-ban-announce-date 2025-01-01 --heat-pump-awareness 0.5 --air-source-heat-pump-price-discount-date 2023-01-01:0.3 --price-gbp-per-kwh-gas 0.0589 --price-gbp-per-kwh-electricity 0.1494
+            pipenv run python -m simulation "./input/scottish_stratified_sample_1.parquet"  "./no_element_energy_efficiency_sc1_${{ matrix.run }}.jsonl.gz"    --air-source-heat-pump-price-discount-date 2023-01-01:0.3
+            pipenv run python -m simulation "./input/scottish_stratified_sample_1.parquet"  "./no_element_energy_efficiency_sc2_${{ matrix.run }}.jsonl.gz"    --intervention boiler_upgrade_scheme --intervention gas_oil_boiler_ban --gas-oil-boiler-ban-date 2035-01-01 --gas-oil-boiler-ban-announce-date 2025-01-01 --heat-pump-awareness 0.5 --air-source-heat-pump-price-discount-date 2023-01-01:0.3 --price-gbp-per-kwh-gas 0.0589 --price-gbp-per-kwh-electricity 0.1494
       - name: Archive jsonl
         uses: actions/upload-artifact@v3
         with:
-          name: scot_sc1_social_network_baseline_jsonl
+          name: no_element_energy_efficiency_sc1_jsonl
           path: |
-            ./scot_sc1_social_network_baseline_${{ matrix.run }}.jsonl.gz
-            ./scot_sc2_social_network_baseline_${{ matrix.run }}.jsonl.gz
+            ./no_element_energy_efficiency_sc1_${{ matrix.run }}.jsonl.gz
+            ./no_element_energy_efficiency_sc2_${{ matrix.run }}.jsonl.gz
