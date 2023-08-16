@@ -457,7 +457,7 @@ class Household(Agent):
         if number_neighbours_heat_pump_aware >= model.awareness_influence_threshold:
             self.is_heat_pump_aware = True
 
-        if not is_gas_oil_boiler_ban_announced:
+        #if not is_gas_oil_boiler_ban_announced:
             # if a gas/boiler ban is announced, we assume all households are aware of heat pumps
             if not self.is_heat_pump_aware:
                 heating_system_options -= HEAT_PUMPS

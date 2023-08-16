@@ -59,11 +59,13 @@ jobs:
           theThreshold=${lookupB[$b]}
           echo $theThreshold
 
-          pipenv run python -m simulation "./input/scottish_stratified_sample_1_with_network_half.parquet"  "./awareness_lhs_${{ matrix.parameters }}_${{ matrix.run }}.jsonl.gz"   --intervention rhi --start-date 2012-01-01 --steps 96 --heat-pump-installer-annual-growth-rate 0 --heat-pump-awareness 0.094855997 --awareness-influence-threshold $theThreshold
+          pipenv run python -m simulation "./input/scottish_stratified_sample_1_with_network_half.parquet"  "./awareness_sc1_${{ matrix.parameters }}_${{ matrix.run }}.jsonl.gz"   --air-source-heat-pump-price-discount-date 2023-01-01:0.3 --heat-pump-awareness 0.094855997 --awareness-influence-threshold $theThreshold
+          pipenv run python -m simulation "./input/scottish_stratified_sample_1_with_network_half.parquet"  "./awareness_sc2_${{ matrix.parameters }}_${{ matrix.run }}.jsonl.gz"   --intervention boiler_upgrade_scheme --intervention gas_oil_boiler_ban --gas-oil-boiler-ban-date 2035-01-01 --gas-oil-boiler-ban-announce-date 2025-01-01 --air-source-heat-pump-price-discount-date 2023-01-01:0.3 --price-gbp-per-kwh-gas 0.0589 --price-gbp-per-kwh-electricity 0.1494 --heat-pump-awareness 0.094855997 --awareness-influence-threshold $theThreshold
       - name: Archive results
         uses: actions/upload-artifact@v3
         with:
-          name: awareness_lhs_results
+          name: awareness_sc1_results
           path: |
-            ./awareness_lhs_${{ matrix.parameters }}_${{ matrix.run }}.jsonl.gz
+            ./awareness_sc1_${{ matrix.parameters }}_${{ matrix.run }}.jsonl.gz
+            ./awareness_sc2_${{ matrix.parameters }}_${{ matrix.run }}.jsonl.gz
           if-no-files-found: error
