@@ -1,0 +1,151 @@
+---
+title: "Creating social network"
+---
+
+Script to process Scottish Housing Survey data for heat pump ABM, and also add in information about green attitudes and social connections.
+Then, create social network from social information
+
+# Set up
+
+```{r}
+# Load packages
+library(tidyverse)
+library(readxl)
+library(writexl)
+library(arrow)
+library(splitstackshape)
+library(misty)
+library(gtools)
+library(igraph)
+library(qgraph)
+
+# Set to not show numbers in scientific notation
+options(scipen = 100)
+```
+
+# Read in data
+
+Read in shs_shcs_cleaned data.
+
+```{r}
+shs_shcs_cleaned <- readRDS("../../Data/shs_shcs_cleaned.R")
+```
+
+Use uncount to create multiple rows for each household, based on weight.
+Use single year fuel poverty weight after housing costs, since this excludes households with missing incomes.
+
+```{r}
+# The weights have decimal points, so round these
+shs_shcs_cleaned <- shs_shcs_cleaned %>%
+  mutate(weight_rounded = round(fpWghtAHC, digits = 0))
+
+# Now use this to expand the dataset
+shs_shcs_expanded <- shs_shcs_cleaned %>%
+  uncount(weight_rounded)
+```
+
+Create property size and income decile/percentile variables for stratification and model running
+
+```{r}
+shs_shcs_expanded <- shs_shcs_expanded %>%
+  mutate(property_size = case_when(total_floor_area_m2 <= 72 ~ "small",
+                                   total_floor_area_m2 <= 98 ~ "medium",
+                                   TRUE ~ "large"),
+         income_decile = ntile(income_ahc, 10),
+         income_ahc_percentile = ecdf(income_ahc)(income_ahc))
+```
+
+```{r}
+set.seed(1)
+stratified_sample_half <- stratified(shs_shcs_expanded,
+                                group = c("location",
+                                           "income_decile",
+                                           "property_size",
+                                           "is_off_gas_grid",
+                                           "property_type",
+                                           "built_form",
+                                           "heating_system",
+                                           "epc_rating",
+                                          "potential_epc_rating",
+                                           "occupant_type",
+                                           "is_solid_wall",
+                                          "roof_energy_efficiency",
+                                          "walls_energy_efficiency",
+                                          "windows_energy_efficiency",
+                                           "is_heat_pump_suitable_archetype"),
+                                size = 0.005)
+```
+
+Create unique ID
+
+```{r}
+stratified_sample_half <- stratified_sample_half %>%
+  ungroup() %>%
+  mutate(id_2 = c(1:nrow(stratified_sample_half)),
+         id = paste0(id, "_", id_2))
+```
+
+Create social network
+
+```{r}
+set.seed(3)
+small_world_half <- sample_smallworld(1, 12513, 2, 0.4)
+```
+
+```{r}
+deg <- table(degree(small_world_half))
+
+rel_frequency <- deg/sum(deg)
+
+barplot(rel_frequency)
+```
+
+```{r}
+edge_density(small_world_half)
+```
+
+```{r}
+isolated <- which(degree(small_world_half) == 0)
+
+no_unconnected <- delete_vertices(small_world_half, isolated)
+```
+
+```{r}
+smallworldness(no_unconnected, B = 10)
+```
+
+
+Add names from dataframe to sample
+
+```{r}
+ V(small_world_half)$name <- unique(stratified_sample_half$id)
+```
+
+Get lists of neighbours
+
+```{r}
+small_world_half_df <- as_data_frame(small_world_half)
+```
+
+```{r}
+neighbours <- small_world_half_df %>%
+  group_by(from) %>%
+  summarise(neighbours = str_c(to, collapse = ','))
+```
+
+Add neighbours to sample dataframe and drop unneeded variables
+
+```{r}
+stratified_sample_half <- stratified_sample_half %>%
+  merge(neighbours, by.x = "id", by.y = "from", all = TRUE) %>%
+  select(-gpawr2c, -gpawr3cy_08, -hedqual8, -hhtype_new, -nssec2, -hih_rel, -HIH_ETH2012, -hihage)
+```
+
+Write to Parquet file
+
+```{r}
+write_parquet(stratified_sample_half, "../../Data/scottish_stratified_sample_1_with_network_half.parquet")
+```
+
+
+

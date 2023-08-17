@@ -1,0 +1,668 @@
+---
+title: "Results analysis final"
+---
+
+# Set up
+
+Load packages, and functions from functions script
+
+```{r}
+library(zoo)
+library(arrow)
+library(tidyverse)
+library(broom)
+library(rstatix)
+library(viridis)
+library(rstatix)
+
+source("Functions.R")
+
+options(scipen=999)
+```
+
+# Runs with same and different starting samples
+
+## Scenario 1
+
+```{r}
+same_diff_sample_sc1 <- rbind(get_results("scot_diff_sample"), get_results("scot_same_sample"))
+```
+
+```{r}
+comparison_boxplot(same_diff_sample_sc1, "Sample type", "Different", "Same")
+```
+
+```{r}
+mann_whitney_u(same_diff_sample_sc1)
+```
+
+## Scenario 2
+
+```{r}
+same_diff_sample_sc2 <- rbind(get_results("scot_int_diff_sample"), get_results("scot_int_same_sample"))
+```
+
+```{r}
+comparison_boxplot(same_diff_sample_sc2, "Sample type", "Different", "Same")
+```
+
+```{r}
+mann_whitney_u(same_diff_sample_sc2)
+```
+# Scotland and England and Wales comparison
+
+## Scenario 1
+
+```{r}
+scot_ew_sc1 <- rbind(get_results("scot_sc1"), get_results("ew_sc1"))
+```
+
+```{r}
+comparison_boxplot(scot_ew_sc1, "Region", "England and Wales", "Scotland")
+```
+```{r}
+mann_whitney_u(scot_ew_sc1)
+```
+### Explore what's happening at each stage
+
+Read in data about all points where agents make decisions.
+
+```{r}
+hp_decision_points_scot_sc1 <- get_all_hp_decision_points("scot_sc1")
+```
+
+```{r}
+hp_decision_points_ew_sc1 <- get_all_hp_decision_points("ew_sc1")
+```
+
+```{r}
+hp_decision_points_scot_ew_sc1 <- rbind(hp_decision_points_scot_sc1, hp_decision_points_ew_sc1)
+```
+
+What proportion of households consider heat pumps?
+
+```{r}
+percent_considering_hps_chart(hp_decision_points_scot_ew_sc1, "Region", "England and Wales", "Scotland")
+```
+
+Is this significantly different between regions?
+
+```{r}
+considering_z_test(hp_decision_points_scot_ew_sc1, "ew_sc1", "scot_sc1")
+```
+
+What proportion of those who consider them install them?
+
+```{r}
+percent_installing_hps_chart(hp_decision_points_scot_ew_sc1, "Region", "England and Wales", "Scotland")
+```
+Is this significantly different between regions?
+
+```{r}
+installing_z_test(hp_decision_points_scot_ew_sc1, "ew_sc1", "scot_sc1")
+```
+
+What proportion of households were aware of heat pumps and suitable to install them?
+
+```{r}
+hp_decision_points_scot_ew_sc1 %>%
+  mutate(aware_and_suitable = ifelse(household_is_heat_pump_aware & household_is_heat_pump_suitable, 1, 0)) %>%
+  group_by(run, household_is_heat_pump_aware) %>%
+  tally() %>%
+  ungroup()
+```
+
+
+```{r}
+prop.test(x = c(15032, 15500), n = c(58470, 59084))
+```
+
+```{r}
+hp_decision_points_scot_ew_sc1 %>%
+  group_by(run, household_is_heat_pump_suitable) %>%
+  tally() %>%
+  ungroup()
+```
+
+```{r}
+prop.test(x = c(40251, 28290), n = c(58470, 59084))
+```
+
+## Scenario 2
+
+```{r}
+scot_ew_sc2 <- rbind(get_results("scot_sc2"), get_results("ew_sc2"))
+```
+
+```{r}
+comparison_boxplot(scot_ew_sc2, "Region", "England and Wales", "Scotland")
+```
+
+```{r}
+mann_whitney_u(scot_ew_sc2)
+```
+
+### Explore what's happening at each stage
+
+Read in data about all points where agents make decisions.
+
+```{r}
+hp_decision_points_scot_sc2 <- get_all_hp_decision_points_sc2("scot_sc2")
+```
+
+```{r}
+hp_decision_points_ew_sc2 <- get_all_hp_decision_points_sc2("ew_sc2")
+```
+
+```{r}
+hp_decision_points_scot_ew_sc2 <- rbind(hp_decision_points_scot_sc2, hp_decision_points_ew_sc2)
+```
+
+What proportion of households consider heat pumps?
+
+```{r}
+percent_considering_hps_chart(hp_decision_points_scot_ew_sc2, "Region", "England and Wales", "Scotland")
+```
+What proportion of households were aware of heat pumps and suitable to install them?
+
+```{r}
+hp_decision_points_scot_ew_sc2 %>%
+  filter(step >= 27) %>%
+  mutate(household_is_heat_pump_aware == TRUE) %>%
+  mutate(aware_and_suitable = ifelse(household_is_heat_pump_aware & household_is_heat_pump_suitable, 1, 0)) %>%
+  group_by(run, household_is_heat_pump_suitable) %>%
+  tally() %>%
+  mutate(percent = n/sum(n)) %>%
+  ungroup()
+```
+
+Is this significantly different between regions?
+
+```{r}
+considering_z_test(hp_decision_points_scot_ew_sc2, "ew_sc2", "scot_sc2")
+```
+What proportion of those who consider them install them?
+
+```{r}
+percent_installing_hps_chart(hp_decision_points_scot_ew_sc2, "Region", "England and Wales", "Scotland")
+```
+Is this significantly different between regions?
+
+```{r}
+installing_z_test(hp_decision_points_scot_ew_sc2, "ew_sc2", "scot_sc2")
+```
+
+# Removing potential EPC rating
+
+```{r}
+no_potential_epc_sc1 <- rbind(get_results("scot_sc1"), get_results("no_potential_epc_sc1"))
+```
+
+```{r}
+comparison_boxplot(no_potential_epc_sc1, "Model", "Excluding potential EPC", "Including potential EPC")
+```
+```{r}
+mann_whitney_u(no_potential_epc_sc1)
+```
+
+```{r}
+hp_decision_points_no_potential_epc_sc1 <- get_all_hp_decision_points("no_potential_epc_sc1")
+```
+
+```{r}
+hp_decision_points_no_potential_epc_scot_sc1 <- rbind(hp_decision_points_scot_sc1, hp_decision_points_no_potential_epc_sc1)
+```
+
+What proportion of households consider heat pumps?
+
+```{r}
+percent_considering_hps_chart(hp_decision_points_no_potential_epc_scot_sc1, "Model", "Excluding potential EPC", "Including potential EPC")
+```
+
+```{r}
+considering_z_test(hp_decision_points_no_potential_epc_scot_sc1, "no_potential_epc_sc1", "scot_sc1")
+```
+
+```{r}
+percent_installing_hps_chart(hp_decision_points_no_potential_epc_scot_sc1, "Model", "Excluding potential EPC", "Including potential EPC")
+```
+
+```{r}
+installing_z_test(hp_decision_points_no_potential_epc_sc1, "no_potential_epc_sc1", "scot_sc1")
+```
+```{r}
+no_potential_epc_sc2 <- rbind(get_results("scot_sc2"), get_results("no_potential_epc_sc2"))
+```
+
+```{r}
+comparison_boxplot(no_potential_epc_sc2, "Model", "Excluding potential EPC", "Including potential EPC")
+```
+```{r}
+mann_whitney_u(no_potential_epc_sc2)
+```
+
+
+```{r}
+hp_decision_points_no_potential_epc_sc2 <- get_all_hp_decision_points("no_potential_epc_sc2")
+```
+
+```{r}
+hp_decision_points_no_potential_epc_scot_sc2 <- rbind(hp_decision_points_scot_sc2, hp_decision_points_no_potential_epc_sc2)
+```
+
+What proportion of households consider heat pumps?
+
+```{r}
+percent_considering_hps_chart(hp_decision_points_no_potential_epc_scot_sc2, "Model", "Excluding potential EPC", "Including potential EPC")
+```
+
+```{r}
+considering_z_test(hp_decision_points_no_potential_epc_scot_sc2, "no_potential_epc_sc2", "scot_sc2")
+```
+
+```{r}
+percent_installing_hps_chart(hp_decision_points_no_potential_epc_scot_sc2, "Model", "Excluding potential EPC", "Including potential EPC")
+```
+
+```{r}
+installing_z_test(hp_decision_points_no_potential_epc_scot_sc2, "no_potential_epc_sc2", "scot_sc2")
+```
+
+# Change energy efficiency of elements
+
+```{r}
+no_element_energy_efficiency_sc1 <- rbind(get_results("scot_sc1"), get_results("no_element_energy_efficiency_sc1"))
+```
+
+```{r}
+comparison_boxplot(no_element_energy_efficiency_sc1, "Model", "Excluding element efficiency", "Including element efficiency")
+```
+
+```{r}
+mann_whitney_u(no_element_energy_efficiency_sc1)
+```
+
+```{r}
+hp_decision_points_no_element_energy_efficiency_sc1 <- get_all_hp_decision_points("no_element_energy_efficiency_sc1")
+```
+
+```{r}
+hp_decision_points_no_element_energy_efficiency_sc1 <- rbind(hp_decision_points_scot_sc1, hp_decision_points_no_element_energy_efficiency_sc1)
+```
+
+```{r}
+percent_considering_hps_chart(hp_decision_points_no_element_energy_efficiency_sc1, "Model", "Excluding element efficiency", "Including element efficiency")
+```
+
+```{r}
+considering_z_test(hp_decision_points_no_element_energy_efficiency_sc1, "no_element_energy_efficiency_sc1", "scot_sc1")
+```
+
+```{r}
+percent_installing_hps_chart(hp_decision_points_no_element_energy_efficiency_sc1, "Model", "Excluding element efficiency", "Including element efficiency")
+```
+
+```{r}
+installing_z_test(hp_decision_points_no_element_energy_efficiency_sc1, "no_element_energy_efficiency_sc1", "scot_sc1")
+```
+
+```{r}
+no_element_energy_efficiency_sc2 <- rbind(get_results("scot_sc2"), get_results("no_element_energy_efficiency_sc2"))
+```
+
+```{r}
+comparison_boxplot(no_element_energy_efficiency_sc2, "Model", "Excluding element efficiency", "Including element efficiency")
+```
+
+```{r}
+mann_whitney_u(no_element_energy_efficiency_sc2)
+```
+
+# Social influence - awareness
+
+Read in data from two runs (one is the sensitivity analysis)
+
+```{r}
+combination_nos <- c(1, 11)
+  
+dataframes <- lapply(combination_nos, function(x){get_results(paste0("awareness_sc1_",x))})
+  
+awareness_sc1_1_results <- do.call(rbind, dataframes)
+```
+
+```{r}
+awareness_baseline_sc1 <- rbind(awareness_sc1_1_results, get_results("sn_sc1_social_network_baseline"))
+```
+
+
+
+```{r}
+comparison_boxplot_no_leg(awareness_baseline_sc1, "Model") +
+    scale_fill_discrete(labels = c("Awareness threshold 1", "Awareness threshold 11", "Baseline"))
+```
+
+Compare thesholds 1 and 11
+```{r}
+mann_whitney_u(awareness_sc1_1_results) %>%
+  adjust_pvalue(p.col = )
+```
+
+Compare thereshold 1 and baseline
+
+```{r}
+awareness_baseline_sc1 %>%
+  filter(run != "awareness_sc1_11") %>%
+  mann_whitney_u(.)
+```
+
+```{r}
+awareness_baseline_sc1 %>%
+  filter(run != "awareness_sc1_1") %>%
+  mann_whitney_u(.)
+```
+```{r}
+combination_nos <- c(1, 11)
+  
+dataframes <- lapply(combination_nos, function(x){get_all_hp_decision_points(paste0("awareness_sc1_",x))})
+  
+awareness_sc1_decision_points <- do.call(rbind, dataframes)
+```
+
+```{r}
+sc1_social_network_decision_points <- get_all_hp_decision_points("sn_sc1_social_network_baseline")
+```
+
+```{r}
+sc1_social_network_baseline_decision_points <- rbind(awareness_sc1_decision_points, sc1_social_network_decision_points)
+```
+
+```{r}
+sc1_social_network_baseline_decision_points %>%
+  group_by(run, step, household_is_heat_pump_aware) %>%
+  tally() %>%
+  mutate(percent = n/sum(n)) %>%
+  filter(household_is_heat_pump_aware) %>%
+  ggplot(aes(x = step, y = percent, colour = run)) +
+  geom_line() +
+  theme_classic() +
+  labs(y = "Percent of households heat pump aware",
+         x = "Time step (month)",
+         colour = "Model") +
+    scale_y_continuous(labels = scales::percent) +
+    scale_colour_discrete(labels = c("Awareness threshold 1", "Awareness threshold 11", "Baseline"))
+```
+
+```{r}
+percent_considering_hps_chart_no_leg(sc1_social_network_baseline_decision_points, "Model") +
+  scale_fill_viridis(discrete = TRUE, labels = c("Awareness threshold 1", "Awareness threshold 11", "Baseline")) +
+  theme(axis.text.x = element_text(angle = 45, vjust = 0.5))
+```
+
+
+
+```{r}
+considering_z_test(awareness_sc1_decision_points, "awareness_sc1_1", "awareness_sc1_11")
+```
+```{r}
+sc1_social_network_baseline_decision_points %>%
+  filter(run != "awareness_sc1_11") %>%
+  considering_z_test(., "sn_sc1_social_network_baseline", "awareness_sc1_1")
+```
+
+```{r}
+sc1_social_network_baseline_decision_points %>%
+  filter(run != "awareness_sc1_1") %>%
+  considering_z_test(., "sn_sc1_social_network_baseline", "awareness_sc1_11")
+```
+
+```{r}
+percent_installing_hps_chart_no_leg(sc1_social_network_baseline_decision_points, "Model") +
+  scale_fill_viridis(discrete = TRUE, labels = c("Awareness threshold 1", "Awareness threshold 11", "Baseline")) +
+  theme(axis.text.x = element_text(angle = 45, vjust = 0.5))
+```
+
+```{r}
+installing_z_test(awareness_sc1_decision_points, "awareness_sc1_1", "awareness_sc1_11")
+```
+
+```{r}
+sc1_social_network_baseline_decision_points %>%
+  filter(run != "awareness_sc1_1") %>%
+  installing_z_test(., "awareness_sc1_11", "sn_sc1_social_network_baseline")
+```
+
+```{r}
+sc1_social_network_baseline_decision_points %>%
+  filter(run != "awareness_sc1_11") %>%
+  installing_z_test(., "awareness_sc1_1", "sn_sc1_social_network_baseline")
+```
+
+# Scenario 2
+
+```{r}
+combination_nos <- c(1, 11)
+  
+dataframes <- lapply(combination_nos, function(x){get_results(paste0("awareness_sc2_",x))})
+  
+awareness_sc2_results <- do.call(rbind, dataframes)
+```
+
+```{r}
+awareness_baseline_sc2 <- rbind(awareness_sc2_results, get_results("sn_sc2_social_network_baseline"))
+```
+
+
+```{r}
+comparison_boxplot_no_leg(awareness_baseline_sc2, "Model") +
+    scale_fill_discrete(labels = c("Awareness threshold 1", "Awareness threshold 11", "Baseline"))
+```
+
+```{r}
+mann_whitney_u(awareness_sc2_results)
+```
+
+Compare thereshold 1 and baseline
+
+```{r}
+awareness_baseline_sc2 %>%
+  filter(run != "awareness_sc2_11") %>%
+  mann_whitney_u(.)
+```
+
+Compare thereshold 1 and baseline
+
+```{r}
+awareness_baseline_sc2 %>%
+  filter(run != "awareness_sc2_1") %>%
+  mann_whitney_u(.)
+```
+
+# Social influence - heating system choice
+
+Read in data from two runs (one is the sensitivity analysis)
+
+```{r}
+combination_nos <- c(3, 6)
+  
+dataframes <- lapply(combination_nos, function(x){get_results(paste0("influence_importance_sc1_",x))})
+  
+influence_sc1_results <- do.call(rbind, dataframes)
+```
+
+```{r}
+influence_baseline_sc1 <- rbind(influence_sc1_results, get_results("sn_sc1_social_network_baseline"))
+```
+
+```{r}
+comparison_boxplot_no_leg(influence_baseline_sc1, "Model") +
+    scale_fill_discrete(labels = c("Influence importance 0.33", "Influence importance 0.67", "Baseline"))
+```
+
+```{r}
+mann_whitney_u(influence_sc1_results)
+```
+
+Compare thereshold 1 and baseline
+
+```{r}
+influence_baseline_sc1 %>%
+  filter(run != "influence_importance_sc1_3") %>%
+  mann_whitney_u(.)
+```
+
+Compare thereshold 1 and baseline
+
+```{r}
+influence_baseline_sc1 %>%
+  filter(run != "influence_importance_sc1_6") %>%
+  mann_whitney_u(.)
+```
+
+```{r}
+combination_nos <- c(3, 6)
+  
+dataframes <- lapply(combination_nos, function(x){get_all_hp_decision_points_influence(paste0("influence_importance_sc1_",x))})
+  
+influence_importance_sc1_decision_points <- do.call(rbind, dataframes)
+```
+
+```{r}
+sc1_social_network_decision_points_for_influence <- sc1_social_network_decision_points
+
+names(sc1_social_network_decision_points_for_influence) <- gsub(x = names(sc1_social_network_decision_points_for_influence), pattern = "weight", replacement = "cost_weight")  
+  
+```
+
+```{r}
+influence_importance_baseline_sc1_decision_points <- rbind.fill(influence_importance_sc1_decision_points, sc1_social_network_decision_points_for_influence)
+```
+
+```{r}
+percent_considering_hps_chart_no_leg(influence_importance_baseline_sc1_decision_points, "Model") +
+  scale_fill_viridis(discrete = TRUE, labels = c("Influence importance 0.33", "Influence importance 0.67", "Baseline")) +
+  theme(axis.text.x = element_text(angle = 45, vjust = 0.5))
+```
+```{r}
+considering_z_test(awareness_sc1_decision_points, "influence_importance_sc1_6", "influence_importance_sc1_3")
+```
+
+```{r}
+percent_installing_hps_chart_no_leg(influence_importance_baseline_sc1_decision_points, "Model") +
+  scale_fill_viridis(discrete = TRUE, labels = c("Influence importance 0.33", "Influence importance 0.67", "Baseline")) +
+  theme(axis.text.x = element_text(angle = 45, vjust = 0.5))
+```
+
+```{r}
+installing_z_test(influence_importance_sc1_decision_points, "influence_importance_sc1_3", "influence_importance_sc1_6")
+```
+
+```{r}
+influence_importance_baseline_sc1_decision_points %>%
+  filter(run != "influence_importance_sc1_6") %>%
+  installing_z_test(., "influence_importance_sc1_3", "sn_sc1_social_network_baseline")
+```
+
+## Scenario 2
+
+```{r}
+combination_nos <- c(3, 6)
+  
+dataframes <- lapply(combination_nos, function(x){get_results(paste0("influence_importance_sc2_",x))})
+  
+influence_importance_sc2 <- do.call(rbind, dataframes)
+```
+
+```{r}
+influence_baseline_sc2 <- rbind(influence_importance_sc2, get_results("sn_sc2_social_network_baseline"))
+```
+
+```{r}
+comparison_boxplot_no_leg(influence_baseline_sc2, "Model") +
+    scale_fill_discrete(labels = c("Influence importance 0.33", "Influence importance 0.67", "Baseline"))
+```
+```{r}
+mann_whitney_u(influence_importance_sc2)
+```
+
+
+```{r}
+influence_importance_sc2_3_decision_points <-get_all_hp_decision_points_influence("influence_importance_sc2_3")
+```
+
+```{r}
+influence_importance_sc2_6_decision_points <-get_all_hp_decision_points_influence_sc2("influence_importance_sc2_6")
+```
+
+
+```{r}
+sc1_social_network_decision_points_for_influence <- sc1_social_network_decision_points
+
+names(sc1_social_network_decision_points_for_influence) <- gsub(x = names(sc1_social_network_decision_points_for_influence), pattern = "weight", replacement = "cost_weight")  
+  
+```
+
+```{r}
+influence_importance_baseline_sc1_decision_points <- rbind.fill(influence_importance_sc1_decision_points, sc1_social_network_decision_points_for_influence)
+```
+
+# Green attitudes
+
+```{r}
+combination_nos <- c(7, 9)
+  
+dataframes <- lapply(combination_nos, function(x){get_results(paste0("green_attitudes_sc1_",x))})
+  
+green_attitudes_sc1_results <- do.call(rbind, dataframes)
+```
+
+
+```{r}
+green_attitudes_baseline_sc1_results <- rbind(green_attitudes_sc1_results, get_results("scot_sc1"))
+```
+
+```{r}
+comparison_boxplot_no_leg(green_attitudes_baseline_sc1_results, "Model")
+```
+
+```{r}
+combination_nos <- c(7, 9)
+  
+dataframes <- lapply(combination_nos, function(x){get_results(paste0("green_attitudes_sc2_",x))})
+  
+green_attitudes_sc2_results <- do.call(rbind, dataframes)
+```
+
+
+```{r}
+green_attitudes_baseline_sc2_results <- rbind(green_attitudes_sc2_results, get_results("scot_sc2"))
+```
+
+```{r}
+comparison_boxplot_no_leg(green_attitudes_baseline_sc2_results, "Model") +
+    scale_fill_discrete(labels = c("Environmental attitudes 0.07", "Environmental attitudes 0.9", "Baseline"))
+```
+```{r}
+mann_whitney_u(green_attitudes_sc2_results)
+```
+```{r}
+green_attitudes_baseline_sc2_results %>%
+  
+```
+
+
+
+```{r}
+combination_nos <- c(7, 9)
+  
+dataframes <- lapply(combination_nos, function(x){get_all_hp_decision_points_green_sc2(paste0("green_attitudes_sc2_",x))})
+  
+green_sc2_decision_points <- do.call(rbind, dataframes)
+```
+
+```{r}
+green_sc2_decision_points %>%
+  filter(household_cost_weight_heat_pump_air_source != household_combined_weight_heat_pump_air_source |
+           household_cost_weight_heat_pump_ground_source != household_combined_weight_heat_pump_ground_source) %>%
+  View()
+```
+

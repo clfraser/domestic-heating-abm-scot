@@ -1,0 +1,335 @@
+---
+title: "Latin hypercube sampling"
+---
+
+# Set up
+
+Load packages
+
+```{r}
+library(tidyverse)
+library(lhs)
+library(forecast)
+library(kSamples)
+
+source("Functions.R")
+
+options(scipen=999)
+```
+
+# Real data
+
+First, process the data which we are trying to recreate with the model.
+
+Create dataframe with data, sourced from reports for each year from: https://www.eurobserv-er.org/category/all-heat-pumps-barometers/
+
+```{r}
+hp_installs_uk <- data.frame(heat_pumps = c(16749, 17632, 18550, 19401, 17978, 21618, 25925, 31245))
+```
+
+Make into a time series object
+
+```{r}
+hp_installs_ts <- ts(hp_installs_uk, start = 2012, end = 2019, frequency = 1)
+```
+
+Visualise data
+
+```{r}
+plot(hp_installs_ts, ylim = c(0,32000), ylab = "UK heat pump sales", xlab = "Year")
+```
+There's a drop in 2016. However, there's not a clear reason for this from the heat pump barometer, and it doesn't appear in the Home Energy Scotland Renewable Energy report for domestic and non-domestic buildings combined. It wouldn't be possible to predict it from the model (it would overfit). So replace it based on prediction from linear regression model of other data.
+
+```{r}
+fit_ts <- tslm(heat_pumps ~ trend, hp_installs_ts, subset = c(TRUE, TRUE, TRUE, TRUE, FALSE, FALSE, FALSE, FALSE))
+```
+
+```{r}
+summary(fit_ts)
+```
+
+Plot residuals
+
+
+```{r}
+res <- residuals(fit_ts)
+autoplot(res) + xlab("Year") + ylab("")
+```
+They look ok, considering the small amount of data.
+
+Predict value for 2016, using the 2012-15 regression
+
+```{r}
+forecast(fit_ts, h=1)
+```
+
+Replace the 2016 value in the series
+
+```{r}
+hp_installs_uk_modified <- data.frame(year = c("2012", "2013", "2014", "2015", "2016", "2017", "2018", "2019"),
+                                      heat_pumps = c(16749, 17632, 18550, 19401, 20302, 21618, 25925, 31245))
+```
+
+Plot modified time series
+
+```{r}
+plot(ts(hp_installs_uk_modified$heat_pumps, start = 2012, end = 2019, frequency = 1), ylim = c(0,32000), ylab = "UK heat pump sales", xlab = "Year")
+```
+
+
+
+Scale data down for Scotland (9% of UK households) and for the fact that the model is only run on 1/200th of households (for the social influence models).
+Call this column 'results', to bind later with results of the LHS runs.
+
+```{r}
+hp_installs_scotland <- hp_installs_uk_modified %>%
+  mutate(results = heat_pumps * 0.09 / 200,
+         run = "real_data") %>%
+  dplyr::select(year, run, results)
+```
+
+
+# LHS for heat pump awareness model
+
+Generate parameter values through LHS. Get one column of floats and one of integers (for the threshold).
+
+```{r}
+set.seed(1)
+N <- 10
+X <- randomLHS(N, 2)
+Y <- as.data.frame(X)
+names(Y) <- c("hp_awareness","threshold")
+
+# translate the integer marginals
+map_to_integers <- function(p, a, b)
+{
+  # p is a vector on (0,1)
+  # a and b are integers
+  floor(p*(b-a+1)) + a
+}
+Y$threshold <- map_to_integers(Y$threshold, 1, 11)
+# Map the awareness to a uniform distribution between 0 and 0.3
+Y$hp_awareness <- qunif(Y$hp_awareness, 0, 0.25)
+```
+
+```{r}
+Y
+```
+
+Model is run in Python and results saved in feather files.
+
+Read all calibration results medians into dataframes and bind them together.
+
+```{r}
+combination_nos <- seq(1:10)
+  
+dataframes <- lapply(combination_nos, function(x){get_rhi_calibration_results_median(paste0("awareness_lhs_",x))})
+  
+awareness_lhs_results <- do.call(rbind, dataframes)
+```
+
+Bind in figures to calibrate to.
+
+```{r}
+awareness_lhs_results <- rbind(awareness_lhs_results, hp_installs_scotland)
+```
+
+Visualise on a chart
+
+```{r}
+awareness_lhs_results %>%
+  mutate(run = ifelse(run == "real_data", "Real data", paste0("Sample ", gsub("\\D", "", run))),
+         run = factor(run, levels = c("Real data", "Sample 1", "Sample 2", "Sample 3", "Sample 4", "Sample 5", "Sample 6", "Sample 7", "Sample 8", "Sample 9", "Sample 10")),
+         # run = case_when(run == "Sample 1" ~ "1. 0.25, 2",
+         #                 run == "Sample 2" ~ "2. 0.12, 1",
+         #                 run == "Sample 3" ~ "3. 0.01, 10",
+         #                 run == "Sample 4" ~ "4. 0.03, 4",
+         #                 run == "Sample 5" ~ "5. 0.07, 6",
+         #                 run == "Sample 6" ~ "6. 0.21, 3",
+         #                 run == "Sample 7" ~ "7. 0.19, 7",
+         #                 run == "Sample 8" ~ "8. 0.15, 6",
+         #                 run == "Sample 9" ~ "9. 0.09, 11",
+         #                 run == "Sample 10" ~ "10. 0.17, 9")
+         ) %>%
+  ggplot(aes(x = year, y = results)) +
+  geom_bar(stat = "identity") +
+  theme_classic() +
+  facet_wrap(vars(run)) +
+  theme(axis.text.x = element_text(angle = 45, vjust = 0.5)) +
+  ylab("Heat pump installations") +
+  xlab("Year")
+```
+Get mean squared errors
+
+```{r}
+awareness_lhs_results_pivot <- awareness_lhs_results %>%
+  pivot_wider(names_from = run, values_from = results)
+```
+
+```{r}
+combination_nos <- seq(1:10)
+
+dataframes <- lapply(combination_nos, function(x){awareness_lhs_results_pivot %>%
+    summarise(!!paste0("mse",x) := mean((real_data - awareness_lhs_results_pivot[[paste0("awareness_lhs_",x)]])^2))})
+
+mse_lhs_awareness <- do.call(cbind, dataframes)
+```
+
+```{r}
+mse_lhs_awareness
+```
+
+
+
+# Social influence of neighbours with heat pumps
+
+
+```{r}
+set.seed(1)
+N <- 10
+X <- randomLHS(N, 1)
+Y <- as.data.frame(X)
+```
+
+```{r}
+Y
+```
+
+
+```{r}
+combination_nos <- seq(1:10)
+  
+dataframes <- lapply(combination_nos, function(x){get_rhi_calibration_results_median(paste0("influence_importance_lhs_",x))})
+  
+influence_importance_results <- do.call(rbind, dataframes)
+```
+
+```{r}
+influence_importance_results <- rbind(influence_importance_results, hp_installs_scotland)
+```
+
+Visualise on a chart
+
+```{r}
+influence_importance_results %>%
+  mutate(run = ifelse(run == "real_data", "Real data", paste0("Sample ", gsub("\\D", "", run))),
+         run = factor(run, levels = c("Real data", "Sample 1", "Sample 2", "Sample 3", "Sample 4", "Sample 5", "Sample 6", "Sample 7", "Sample 8", "Sample 9", "Sample 10"))) %>%
+  ggplot(aes(x = year, y = results)) +
+  geom_bar(stat = "identity") +
+  theme_classic() +
+  facet_wrap(vars(run)) +
+  theme(axis.text.x = element_text(angle = 45, vjust = 0.5)) +
+  xlab("Year") +
+  ylab("Heat pump installations")
+```
+
+Pivot data
+
+```{r}
+influence_importance_results_pivot <- influence_importance_results %>%
+  pivot_wider(names_from = run, values_from = results)
+```
+
+```{r}
+combination_nos <- seq(1:10)
+
+dataframes <- lapply(combination_nos, function(x){influence_importance_results_pivot %>%
+    summarise(!!paste0("mse",x) := mean((real_data - influence_importance_results_pivot[[paste0("influence_importance_lhs_",x)]])^2))})
+
+mse_influence_importance <- do.call(cbind, dataframes)
+```
+
+```{r}
+mse_influence_importance
+```
+
+
+
+# Green attitudes
+
+We wouldn't expect green attitudes to change the shape of the data, so compare this to the mean of all years (like CNZ have done)
+
+```{r}
+hp_installs_green_attitudes <- hp_installs_uk_modified %>%
+  mutate(results = mean(heat_pumps * 0.09 / 200),
+         run = "real_data") %>%
+  dplyr::select(year, run, results)
+```
+
+Get LHS sampling
+
+```{r}
+set.seed(1)
+N <- 10
+X <- randomLHS(N, 1)
+Y <- as.data.frame(X)
+```
+
+```{r}
+Y
+```
+
+Read all calibration results medians into dataframes and bind them together.
+
+```{r}
+combination_nos <- seq(1:10)
+  
+dataframes <- lapply(combination_nos, function(x){get_rhi_calibration_results_median(paste0("green_attitudes_lhs_",x))})
+  
+green_attitudes_lhs_results <- do.call(rbind, dataframes)
+```
+
+```{r}
+green_attitudes_lhs_results <- rbind(green_attitudes_lhs_results, hp_installs_green_attitudes)
+```
+
+Visualise on a chart
+
+```{r}
+green_attitudes_lhs_results %>%
+  mutate(run = ifelse(run == "real_data", "Real data", paste0("Sample ", gsub("\\D", "", run))),
+         run = factor(run, levels = c("Real data", "Sample 1", "Sample 2", "Sample 3", "Sample 4", "Sample 5", "Sample 6", "Sample 7", "Sample 8", "Sample 9", "Sample 10"))) %>%
+  ggplot(aes(x = year, y = results)) +
+  geom_bar(stat = "identity") +
+  theme_classic() +
+  facet_wrap(vars(run)) +
+  theme(axis.text.x = element_text(angle = 45, vjust = 0.5)) +
+  xlab("Year") +
+  ylab("Heat pump installations")
+```
+
+Pivot data
+
+```{r}
+green_attitudes_results_pivot <- green_attitudes_lhs_results %>%
+  pivot_wider(names_from = run, values_from = results)
+```
+
+```{r}
+combination_nos <- seq(1:10)
+
+dataframes <- lapply(combination_nos, function(x){green_attitudes_results_pivot %>%
+    summarise(!!paste0("mse",x) := mean((real_data - green_attitudes_results_pivot[[paste0("green_attitudes_lhs_",x)]])^2))})
+
+mse_green_attitudes <- do.call(cbind, dataframes)
+```
+
+```{r}
+mse_green_attitudes
+```
+
+# Get baseline results
+
+```{r}
+rhi_baseline_results <- get_rhi_results("scot_rhi_baseline")
+```
+
+```{r}
+rhi_baseline_results %>%
+  ggplot(aes(x = year, y = new_installs)) +
+    geom_boxplot() +
+    ylim(0,NA) +
+    theme_classic() +
+    labs(y = "New heat pump installations",
+         x = "Year")
+```

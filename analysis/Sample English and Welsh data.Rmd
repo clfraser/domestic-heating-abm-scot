@@ -1,0 +1,112 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+ew_distribution <- read_xlsx("../../Data/hou01tables2021.xlsx", sheet = "4a", skip = 3)
+```
+
+Rename columns
+
+```{r}
+colnames(ew_distribution) <- c("area_code", "area_name", "tenure", "detached_house", "semi_detached_house", "terraced_house", "flat", "caravan")
+```
+
+
+
+```{r}
+ew_pivot <- ew_distribution %>%
+  filter(str_detect(area_code, "E0") | str_detect (area_code, "W06")) %>% # Filter out anything that isn't a local authority
+  select(-area_code, -caravan) %>%
+  pivot_longer(cols = c(detached_house:flat), values_to = "number", names_to = "type") %>%
+  pivot_wider(id_cols = c(area_name, type), names_from = tenure, values_from = number) %>%
+  select(area_name, type, "Total: Owned or shared ownership", "Total: Social Rented", "Private rented from landlord or letting agency", "Other private rented")
+```
+
+```{r}
+colnames(ew_pivot) <- c("area_name", "type", "owner_occupied", "rented_social", "private_landlord", "private_other")
+```
+
+Missing values are from suppressed small numbers under 10. Set these at 5.
+
+```{r}
+ew_pivot <- ew_pivot %>%
+  mutate(private_landlord = as.numeric(private_landlord),
+         private_other = as.numeric(private_other),
+    owner_occupied = as.numeric(owner_occupied),
+         rented_social = as.numeric(rented_social)) %>%
+  replace(is.na(.), 5)
+```
+
+
+```{r}
+ew_pivot <- ew_pivot %>%
+  mutate(rented_private = private_landlord + private_other) %>%
+  select(-private_landlord, -private_other)
+```
+
+```{r}
+ew_pivot_percent <- ew_pivot %>%
+  pivot_longer(cols = c(owner_occupied:rented_private), names_to = "tenure", values_to = "number") %>%
+  mutate(combined = paste(area_name, type, tenure, sep = "_"),
+         percent = number/sum(number)) %>%
+  select(combined, percent)
+```
+
+Create a combined column for the household agents dataset (remember to come back and write code to read this in)
+
+```{r}
+household_agents_for_sample <- household_agents %>%
+  mutate(house_type = ifelse(str_detect(built_form, "terrace"), "terraced", built_form),
+         house_flat = ifelse(property_type == "house" | property_type == "bungalow", paste0(house_type, "_house"), property_type),
+      combined = paste(location, house_flat, occupant_type, sep = "_"))
+```
+
+Merge with column with sampling weights
+
+```{r}
+household_agents_for_sample_merge <- household_agents_for_sample %>%
+  merge(ew_pivot_percent, all.x = TRUE)
+```
+
+Any NAs in percent?
+
+```{r}
+sum(is.na(household_agents_for_sample_merge$percent))
+```
+
+No, great!
+
+So, take sample, with percent column for probabilities
+
+```{r}
+set.seed(1)
+eng_strat_sample_1 <- slice_sample(household_agents_for_sample_merge,
+                             n = 24810,
+                             weight_by = percent)
+```
+
+Save sampling file as parquet. Also save sample as Parquet.
+
+```{r}
+write_parquet(household_agents_for_sample_merge, "../../Data/ew_agents_for_sampling.parquet")
+```
+
+```{r}
+write_parquet(eng_strat_sample_1, "../../Data/ew_strat_sample_1.parquet")
+```
+
+Create a loop to create 9 more samples and save them as parquet files
+
+```{r}
+sample_no <- c(2:10)
+
+for (i in sample_no) {
+  set.seed(sample_no)
+ew_strat_sample <- slice_sample(household_agents_for_sample_merge,
+                             n = 24810,
+                             weight_by = percent)
+write_parquet(ew_strat_sample, paste0("/../../Data/ew_stratified_sample_", i, ".parquet"))
+}
+```

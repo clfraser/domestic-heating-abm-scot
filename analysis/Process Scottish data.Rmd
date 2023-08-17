@@ -1,0 +1,453 @@
+---
+title: "R Notebook"
+---
+
+Working out stratification for sampling.
+
+# Set up
+
+```{r}
+# Load packages
+library(tidyverse)
+library(readxl)
+library(writexl)
+library(arrow)
+library(splitstackshape)
+library(misty)
+
+# Set to not show numbers in scientific notation
+options(scipen = 100)
+```
+
+Read in functions, defined in another script
+
+```{r}
+source("Functions.R")
+```
+
+
+# Read in data
+
+```{r}
+# Import the SHS survey
+shs_19 <- read.table("../../Data/shs2019_social_public.tab", sep="\t", header=TRUE)
+
+# Read in SHCS component
+shcs_19 <- read.table("../../Data/shcs2019_dataset.tab", sep="\t", header=TRUE)
+
+#Merge the files on the unique identifier, so there's one complete dataset.
+
+shs_shcs <- shcs_19 %>%
+  merge(shs_19, by.x = "uniqidnew_shs_social", by.y = "UNIQIDNEW")
+```
+
+# Code and select relevant variables
+
+Create variables to harmonise with English dataset
+Following fields here: https://github.com/centrefornetzero/domestic-heating-data/blob/main/cnz/models/marts/domestic_heating/dim_household_agents.sql
+Conditions for variables and some derivations here: https://github.com/centrefornetzero/domestic-heating-data/blob/main/cnz/models/marts/domestic_heating/domestic_heating.yml
+
+```{r}
+set.seed(1)
+shs_shcs_selected <- shs_shcs %>%
+  mutate(
+    # Is the property suitable for heat pumps?
+    # Based on code here: https://github.com/centrefornetzero/domestic-heating-data/blob/main/cnz/models/marts/domestic_heating/dim_households.sql
+    # Check what an 'enclosed mid' house is. Assume for now that it's not suitable for heat pumps
+    is_heat_pump_suitable_archetype = if_else(!C1 %in% c(1, 2, 7, 8, 9), TRUE, FALSE),  # Not suitable if mid-terraced or not a house or property type not obtainable
+    is_off_gas_grid = if_else(sgngrid == 1, TRUE, FALSE), # In Scottish data, 0 = on=grid; 1 = off-grid
+    # Construction year band is required for the model data, but doesn't seem to be used in the model.
+    construction_year_band = case_when(M1 == 1 ~ "built_pre_1919",
+                                       M1 == 2 ~ "built_1919_1929",
+                                       M1 == 3 ~ "built_1930_1949",
+                                       M1 == 4 ~ "built_1950_1964",
+                                       M1 == 5 ~ "built_1965_1975", 
+                                       M1 == 6 ~ "built_1976_1983",
+                                       M1 == 7 ~ "built_1984_1991",
+                                       M1 == 8 ~ "built_1992_1996",
+                                       M1 == 9 ~ "built_1999_2002", # Some missing years?
+                                       M1 == 10 ~ "built_2003_2007",
+                                       M1 == 11 ~ "built_2008_2011",
+                                       M1 == 12 ~ "built_2012_onwards",
+                                       TRUE ~ NA),
+    # Property type: the E&W data has options as house, flat, bungalow or park home.
+    # The Scottish data doesn't code for park homes. There are only two of these in the whole E&W dataset, so unlikely to affect the results in a large way.
+    # By running table(shs_shcs$C1, shs_shcs$C2), we can see that properties that aren't a house (code 8 in C1) have a flat type in C2.
+    # So, assume that all properties that aren't houses are flats.
+    property_type = if_else(C1 == 8, "flat", "house"),
+    # Code houses that have one habitable floor as bungalows
+    property_type = if_else(property_type == "house" & J2 == 1, "bungalow", property_type),
+    # Built form: E&W options are 'detached', 'semi_detached', 'mid_terrace', 'end_terrace'
+    # The Scottish data records this separately for houses and flats, with different descriptors for flats
+    # Only code this for houses, since this is only used in relation to houses in the model
+    built_form = case_when(C1 %in% c(1,2, 7) ~ "mid_terrace",
+                           C1 %in% c(3, 6) ~ "end_terrace",
+                           C1 == 4 ~ "semi_detached",
+                           C1 == 5 ~ "detached",
+                           TRUE ~ "mid_terrace"), # Make all flats mid-terrace
+    # Although the heating system names include 'boiler', the E&W data uses main fuel to code this, regardless of whether there's actually a boiler (see lines 83 to 101 here: https://github.com/centrefornetzero/domestic-heating-data/blob/2e1321b6f15772852d62bd69b9453eb8562a622e/cnz/models/marts/domestic_heating/base/base_domestic_heating__epc_features.sql).
+    # I do the same here.
+    heating_system = case_when(M11 %in% c(0, 1, 2, 4, 5, 6) ~ "heat_pump_ground_source", # Water source heat pumps seem to be geothermal, so code these as ground source
+                               M11 %in% c(3, 7) ~ "heat_pump_air_source",
+                               M5 %in% c(1, 3) ~ "boiler_gas",
+                               M5 %in% c(11, 12) ~ "boiler_electric",
+                               M5 %in% c(13, 14, 16, 88, 89) ~ NA, # Communal heating, dual fuel, not applicable and unobtainable
+                               TRUE ~ "boiler_oil"), # The E&W model treats other fuel types as oil
+    # EPC rating includes A and B rated properties in one answer code.
+    # There were no A-rated properties sampled (see https://www.gov.scot/publications/scottish-house-condition-survey-2019-key-findings/pages/5/), so code all AB properties as A.
+    # Bands F and G are also coded together. From link above, 88% of F and G properties are band F, and the rest band G. So, randomly assign F or G according to proportions in real housing stock.
+    epc_rating = 1,
+    epc_rating = case_when(EPC2012_v9.93 == "AB" ~ "B",
+                           EPC2012_v9.93 == "FG" ~ replace(epc_rating, EPC2012_v9.93 == "FG", sample(c("F", "G"), size = length(which(EPC2012_v9.93 == "FG")), prob = c(0.88, 0.12), replace = TRUE)),
+                           TRUE ~ EPC2012_v9.93),
+    # There is no potential EPC rating in the Scottish data, so recreate proportion of potential EPC ratings by existing EPC ratings in English dataset. Start with B, because there are no current EPC ratings A in Scottish dataset.
+    potential_epc_rating = 1,
+    potential_epc_rating = replace(potential_epc_rating, epc_rating == "B", sample(c("A", "B"), size = length(which(epc_rating == "B")), prob = c(0.12, 0.88), replace = TRUE)),
+    potential_epc_rating = replace(potential_epc_rating, epc_rating == "C", sample(c("A", "B", "C"), size = length(which(epc_rating == "C")), prob = c(0.02, 0.63, 0.34), replace = TRUE)),
+    potential_epc_rating = replace(potential_epc_rating, epc_rating == "D", sample(c("A", "B", "C", "D"), size = length(which(epc_rating == "D")), prob = c(0.01, 0.53, 0.37, 0.09), replace = TRUE)),
+    potential_epc_rating = replace(potential_epc_rating, epc_rating == "E", sample(c("A", "B", "C", "D", "E"), size = length(which(epc_rating == "E")), prob = c(0.02, 0.32, 0.41, 0.21, 0.06), replace = TRUE)),
+    potential_epc_rating = replace(potential_epc_rating, epc_rating == "F", sample(c("A", "B", "C", "D", "E", "F"), size = length(which(epc_rating == "F")), prob = c(0.03, 0.21, 0.31, 0.19, 0.19, 0.07), replace = TRUE)),
+    potential_epc_rating = replace(potential_epc_rating, epc_rating == "G", sample(c("A", "B", "C", "D", "E", "F", "G"), size = length(which(epc_rating == "G")), prob = c(0.03, 0.21, 0.21, 0.14, 0.11, 0.16, 0.14), replace = TRUE)),
+    occupant_type = case_when(tenure %in% c(1, 2) ~ "owner_occupied",
+                              tenure %in% c(3, 4) ~ "rented_social",
+                              tenure == 5 ~ "rented_private",
+                              TRUE ~ NA),
+    is_solid_wall = if_else(Q11 == 1, TRUE, FALSE),
+    # Energy efficiency for walls, roof and windows not available in Scottish data.
+    # So, impute with a random number, with probability based on the distribution of each number for each EPC rating in the English data (see scot_ew_data_comparison script for the percentage figures).
+    # Start at EPC B because there are no EPC As in data
+    walls_energy_efficiency = 1,
+    walls_energy_efficiency = replace(walls_energy_efficiency, epc_rating == "B", sample(1:5, size = length(which(epc_rating == "B")), prob = c(0.01, 0.02, 0.05, 0.89, 0.93), replace = TRUE)),
+    walls_energy_efficiency = replace(walls_energy_efficiency, epc_rating == "C", sample(1:5, size = length(which(epc_rating == "C")), prob = c(0.07, 0.08, 0.11, 0.74, 0.01), replace = TRUE)),
+    walls_energy_efficiency = replace(walls_energy_efficiency, epc_rating == "D", sample(1:5, size = length(which(epc_rating == "D")), prob = c(0.27, 0.22, 0.11, 0.40, 0.00), replace = TRUE)),
+    walls_energy_efficiency = replace(walls_energy_efficiency, epc_rating == "E", sample(1:5, size = length(which(epc_rating == "E")), prob = c(0.48, 0.29, 0.06, 0.17, 0.00), replace = TRUE)),
+    walls_energy_efficiency = replace(walls_energy_efficiency, epc_rating == "F", sample(1:5, size = length(which(epc_rating == "F")), prob = c(0.57, 0.28, 0.05, 0.11, 0.00), replace = TRUE)),
+    walls_energy_efficiency = replace(walls_energy_efficiency, epc_rating == "G", sample(1:5, size = length(which(epc_rating == "G")), prob = c(0.65, 0.27, 0.03, 0.05, 0), replace = TRUE)),
+    roof_energy_efficiency = 1,
+    roof_energy_efficiency = replace(roof_energy_efficiency, epc_rating == "B", sample(1:5, size = length(which(epc_rating == "B")), prob = c(0.01, 0.01, 0.08, 0.69, 0.20), replace = TRUE)),
+    roof_energy_efficiency = replace(roof_energy_efficiency, epc_rating == "C", sample(1:5, size = length(which(epc_rating == "C")), prob = c(0.02, 0.02, 0.19, 0.64, 0.12), replace = TRUE)),
+    roof_energy_efficiency = replace(roof_energy_efficiency, epc_rating == "D", sample(1:5, size = length(which(epc_rating == "D")), prob = c(0.16, 0.07, 0.26, 0.43, 0.08), replace = TRUE)),
+    roof_energy_efficiency = replace(roof_energy_efficiency, epc_rating == "E", sample(1:5, size = length(which(epc_rating == "E")), prob = c(0.35, 0.09, 0.23, 0.28, 0.05), replace = TRUE)),
+    roof_energy_efficiency = replace(roof_energy_efficiency, epc_rating == "F", sample(1:5, size = length(which(epc_rating == "F")), prob = c(0.41, 0.10, 0.20, 0.24, 0.05), replace = TRUE)),
+    roof_energy_efficiency = replace(roof_energy_efficiency, epc_rating == "G", sample(1:5, size = length(which(epc_rating == "G")), prob = c(0.56, 0.08, 0.15, 0.17, 0.03), replace = TRUE)),
+    windows_energy_efficiency = 1,
+    windows_energy_efficiency = replace(windows_energy_efficiency, epc_rating == "B", sample(1:5, size = length(which(epc_rating == "B")), prob = c(0, 0, 0.39, 0.61, 0), replace = TRUE)),
+    windows_energy_efficiency = replace(windows_energy_efficiency, epc_rating == "C", sample(1:5, size = length(which(epc_rating == "C")), prob = c(0, 0.01, 0.50, 0.48, 0), replace = TRUE)),
+    windows_energy_efficiency = replace(windows_energy_efficiency, epc_rating == "D", sample(1:5, size = length(which(epc_rating == "D")), prob = c(0.02, 0.04, 0.68, 0.25, 0), replace = TRUE)),
+    windows_energy_efficiency = replace(windows_energy_efficiency, epc_rating == "E", sample(1:5, size = length(which(epc_rating == "E")), prob = c(0.08, 0.10, 0.66, 0.17, 0), replace = TRUE)),
+    windows_energy_efficiency = replace(windows_energy_efficiency, epc_rating == "F", sample(1:5, size = length(which(epc_rating == "F")), prob = c(0.17, 0.15, 0.55, 0.13, 0), replace = TRUE)),
+    windows_energy_efficiency = replace(windows_energy_efficiency, epc_rating == "G", sample(1:5, size = length(which(epc_rating == "G")), prob = c(0.28, 0.15, 0.46, 0.11, 0), replace = TRUE))
+    ) %>%
+  select(id = uniqidnew_shs_social,
+         location = la,
+         income_ahc = incAHC, # Use income after housing costs instead of property value. In model, this is used relative to other properties.
+         total_floor_area_m2 = totfloorar,
+         is_off_gas_grid,
+         construction_year_band,
+         property_type,
+         built_form,
+         heating_system,
+         epc_rating,
+         potential_epc_rating,
+         occupant_type,
+         is_solid_wall,
+         walls_energy_efficiency,
+         roof_energy_efficiency,
+         windows_energy_efficiency,
+         is_heat_pump_suitable_archetype,
+         fpWghtAHC, # Weights, adjusted for missing incomes
+         tsWghtP,
+         # Also add variables needed for model adaptations. First, for green attitude.
+         gpawr2c, # Have you bought or would you buy an electric car or van?
+         gpawr3cy_08, # Is the main reason that you would buy (or have bought) an electric car or van that it's environmentally friendly?
+         # Then, for homophily
+         hedqual8, # Highest education qualification of random adult. Not necessarily HiH, but this probably gives a better idea of the household (also not available for HiH)
+         hhtype_new, # Household type, from SHS list
+         nssec2, # National statistics socio-economic classification of random adult. Ordinal.
+         hih_rel, # Religion of highest income householder
+         annetinc, # Total net annual income
+         HIH_ETH2012, # Ethnicity of HiH
+         hihage) # Age of HiH
+```
+
+# Check missing values
+
+```{r}
+shs_shcs_selected %>%
+  summarise(across(everything(), ~ sum(is.na(.))))
+```
+
+Do the same households with missing incomes also have missing heating systems?
+
+```{r}
+shs_shcs_selected %>%
+  select(income_ahc, heating_system, occupant_type, tsWghtP) %>%
+  mutate(count_na = rowSums(is.na(.))) %>%
+  filter(count_na > 0)
+```
+
+No, they don't necessarily overlap.
+
+```{r}
+calc_percent(shs_shcs_selected, "occupant_type")
+```
+
+
+Use Little's MCAR test to see if data are missing completely at random.
+Exclude variables that I have added with no variance (since they were missing from the SHS/SHCS data) and the weight, which is missing if the income is missing. Also exclude ID.
+
+```{r}
+for_na_test <- shs_shcs_selected %>%
+  select(-potential_epc_rating, -walls_energy_efficiency, -roof_energy_efficiency, -windows_energy_efficiency, -fpWghtAHC, -id)
+```
+
+
+```{r}
+na.test(for_na_test)
+```
+So, we can't say that data are missing completely at random. However, the test doesn't allow us to say that they definitely aren't.
+
+Do some more investigation:
+
+Create a missing data indicator for income
+
+```{r}
+missing_data_check <- shs_shcs_selected %>%
+  mutate(missing_income = is.na(income_ahc)) %>%
+  select(-income_ahc)
+```
+
+Is this patterned with any other variables?
+
+```{r}
+chisq.test(missing_data_check$missing_income, missing_data_check$is_heat_pump_suitable_archetype)
+```
+```{r}
+chisq.test(missing_data_check$missing_income, missing_data_check$is_off_gas_grid)
+```
+```{r}
+chisq.test(missing_data_check$missing_income, missing_data_check$construction_year_band)
+```
+Test is just significant for construction year band. However, this isn't actually used in the model (perhaps it was kept in the original EW data as a legacy after some testing?), so this is ok.
+
+```{r}
+chisq.test(missing_data_check$missing_income, missing_data_check$property_type)
+```
+```{r}
+chisq.test(missing_data_check$missing_income, missing_data_check$built_form)
+```
+```{r}
+chisq.test(missing_data_check$missing_income, missing_data_check$heating_system)
+```
+```{r}
+chisq.test(missing_data_check$missing_income, missing_data_check$epc_rating)
+```
+```{r}
+chisq.test(missing_data_check$missing_income, missing_data_check$potential_epc_rating)
+```
+
+```{r}
+chisq.test(missing_data_check$missing_income, missing_data_check$is_solid_wall)
+```
+```{r}
+chisq.test(missing_data_check$missing_income, missing_data_check$walls_energy_efficiency)
+```
+```{r}
+chisq.test(missing_data_check$missing_income, missing_data_check$roof_energy_efficiency)
+```
+
+```{r}
+chisq.test(missing_data_check$missing_income, missing_data_check$windows_energy_efficiency)
+```
+
+```{r}
+chisq.test(missing_data_check$missing_income, missing_data_check$gpawr3cy_08)
+```
+# Remove records with missing incomes
+
+This is consistent with the way the E&W data were processed, and we can use appropriate weights.
+
+```{r}
+shs_shcs_cleaned <- shs_shcs_selected %>%
+  filter(!is.na(income_ahc))
+```
+
+
+# Instead of removing records for the heating system and occupant type, impute with the mode
+
+This allows us to still use the weights in the data, and means that fewer records are excluded.
+
+Create function to find the mode
+
+```{r}
+Mode(shs_shcs_selected$occupant_type)
+```
+Replace missing occupant types with the mode
+
+```{r}
+shs_shcs_cleaned <- shs_shcs_cleaned %>%
+  mutate(occupant_type = replace_na(occupant_type, Mode(occupant_type)),
+         heating_system = replace_na(heating_system, Mode(heating_system)))
+```
+
+Create green attitude variable. Only true for people who have said yes to environmental reasons (== 1)
+
+```{r}
+shs_shcs_cleaned <- shs_shcs_cleaned %>%
+  mutate(green_attitudes = if_else(gpawr3cy_08 == 1 & !is.na(gpawr3cy_08), TRUE, FALSE))
+```
+
+# Save cleaned (unexpanded) dataset for future use
+
+```{r}
+saveRDS(shs_shcs_cleaned, "../../Data/shs_shcs_cleaned.R")
+```
+
+
+# Uncounting by weight
+
+Use uncount to create multiple rows for each household, based on weight.
+Use single year fuel poverty weight after housing costs, since this excludes households with missing incomes.
+
+```{r}
+# The weights have decimal points, so round these
+shs_shcs_cleaned <- shs_shcs_cleaned %>%
+  mutate(weight_rounded = round(fpWghtAHC, digits = 0))
+
+# Now use this to expand the dataset
+shs_shcs_expanded <- shs_shcs_cleaned %>%
+  uncount(weight_rounded)
+```
+
+# Investigate green attitudes variable
+
+```{r}
+calc_percent(shs_shcs_expanded, "green_attitudes")
+```
+
+About 20% have green attitudes.
+
+# Categorising houses by small, medium and large (this is done in the Python code, but reproduce it here for sampling purposes)
+
+First, find 33rd percentile and 66th percentile of floor space.
+Look at the distribution, since the data is probably top- and bottom-coded.
+
+```{r}
+shs_shcs_expanded %>%
+  ggplot(aes(x = total_floor_area_m2)) +
+  geom_freqpoly()
+```
+
+There are many more at the higher end.
+
+Get 33rd and 66th percentiles.
+
+```{r}
+quantile(shs_shcs_expanded$total_floor_area_m2, c(.33, .66))
+```
+Slightly higher for Scotland than for E&W. These have been put into the model constants.
+
+In model, insulation_segment is used for insulation costs.
+
+This is derived from a set of values here:
+# Upper bound on floor area sqm for to be classed as 'Small', by property type / built form
+# As per the segmentation used in Source: BEIS - WHAT DOES IT COST TO RETROFIT HOMES?
+RETROFIT_COSTS_SMALL_PROPERTY_SQM_LIMIT = {
+    "FLAT": 54,
+    "MID_TERRACE_HOUSE": 76,
+    "SEMI_OR_END_TERRACE_HOUSE": 80,
+    "SMALL_DETACHED_HOUSE": 117,
+}
+
+But property_size (small, medium or large) is used for heating system costs. This is derived from the percentiles calculated above. Use this for stratification, since this is what seems to be referred to as property size in the report.
+
+```{r}
+shs_shcs_expanded <- shs_shcs_expanded %>%
+  mutate(property_size = case_when(total_floor_area_m2 < 72 ~ "small",
+                                   total_floor_area_m2 < 98 ~ "medium",
+                                   TRUE ~ "large"))
+```
+
+# Create income decile for stratification
+
+```{r}
+shs_shcs_expanded <- shs_shcs_expanded %>%
+  mutate(income_decile = ntile(income_ahc, 10))
+```
+
+
+# Create income percentile for model
+
+```{r}
+shs_shcs_expanded <- shs_shcs_expanded %>%
+  mutate(income_ahc_percentile = ecdf(income_ahc)(income_ahc))
+```
+
+
+# Create sample stratified by all fixed variables
+
+```{r}
+set.seed(1)
+stratified_sample <- stratified(shs_shcs_expanded,
+                                group = c("location",
+                                           "income_decile",
+                                           "property_size",
+                                           "is_off_gas_grid",
+                                           "property_type",
+                                           "built_form",
+                                           "heating_system",
+                                           "epc_rating",
+                                          "potential_epc_rating",
+                                           "occupant_type",
+                                           "is_solid_wall",
+                                          "roof_energy_efficiency",
+                                          "walls_energy_efficiency",
+                                          "windows_energy_efficiency",
+                                           "is_heat_pump_suitable_archetype"),
+                                size = 0.01)
+```
+
+
+# From the stratified sample, how many are from the same original ID?
+
+```{r}
+stratified_sample %>%
+  group_by(id) %>%
+  tally() %>%
+  mutate(percent = round(n/sum(n)*100, 2)) %>%
+  arrange(desc(n))
+```
+
+Create 10 stratified samples. Change each ID to be unique, but keep the original ID as part of it so we can track who came from the same record. Save as parquet files.
+
+```{r}
+sample_no <- c(1:10)
+
+for (i in sample_no) {
+  set.seed(sample_no)
+  
+  strat_sample <- stratified(shs_shcs_expanded,
+                                group = c("location",
+                                           "income_decile",
+                                           "property_size",
+                                           "is_off_gas_grid",
+                                           "property_type",
+                                           "built_form",
+                                           "heating_system",
+                                           "epc_rating",
+                                          "potential_epc_rating",
+                                           "occupant_type",
+                                           "is_solid_wall",
+                                          "roof_energy_efficiency",
+                                          "walls_energy_efficiency",
+                                          "windows_energy_efficiency",
+                                           "is_heat_pump_suitable_archetype"),
+                                size = 0.01)
+  
+  strat_sample <- strat_sample %>%
+    mutate(id_2 = c(1:nrow(strat_sample)),
+           id = paste0(id, "_", id_2))
+
+  write_parquet(strat_sample, paste0("../../Data/scottish_stratified_sample_", i, ".parquet"))
+}
+```
