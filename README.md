@@ -17,6 +17,8 @@ No energy efficiency: Similar to no potential EPC, but setting all of the energy
 The Centre for Net Zero instructions below contain links to obtain and process the English and Welsh data.
 The Scottish data is from the 2019 Scottish Health Survey and Scottish House Condition Survey, available through the UK Data Archive: https://www.data-archive.ac.uk/
 
+Data analysis is done in R, using the files in analysis. There is a common 'functions' file that is imported into most other files.
+
 ## Centre for Net Zero instructions
 
 [Centre for Net Zero's](https://www.centrefornetzero.org/) agent-based model (ABM) for the electrification of domestic heating in England and Wales.
