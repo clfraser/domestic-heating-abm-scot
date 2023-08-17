@@ -1,5 +1,5 @@
 name: Run commands social network awareness
-on: []
+on: [push]
 
 env:
   PYTHONPATH: .
