@@ -2,9 +2,6 @@
 title: "Creating social network"
 ---
 
-Script to process Scottish Housing Survey data for heat pump ABM, and also add in information about green attitudes and social connections.
-Then, create social network from social information
-
 # Set up
 
 ```{r}
