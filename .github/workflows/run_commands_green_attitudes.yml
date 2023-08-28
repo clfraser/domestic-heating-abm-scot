@@ -42,12 +42,12 @@ jobs:
           theInfluence=${lookup[$a]}
           echo $theInfluence
 
-            pipenv run python -m simulation "./input/scottish_stratified_sample_1.parquet"  "./green_attitudes_sc1_${{matrix.parameters}}_${{matrix.run}}.jsonl.gz" --air-source-heat-pump-price-discount-date 2023-01-01:0.3 --green-attitudes-influence $theInfluence
-            pipenv run python -m simulation "./input/scottish_stratified_sample_1.parquet"  "./green_attitudes_sc2_${{matrix.parameters}}_${{matrix.run}}.jsonl.gz" --intervention boiler_upgrade_scheme --intervention gas_oil_boiler_ban --gas-oil-boiler-ban-date 2035-01-01 --gas-oil-boiler-ban-announce-date 2025-01-01 --heat-pump-awareness 0.5 --air-source-heat-pump-price-discount-date 2023-01-01:0.3 --price-gbp-per-kwh-gas 0.0589 --price-gbp-per-kwh-electricity 0.1494 --green-attitudes-influence $theInfluence
+            pipenv run python -m simulation "./input/scottish_stratified_sample_1.parquet"  "./green_attitudes_sc1_fixes${{matrix.parameters}}_${{matrix.run}}.jsonl.gz" --air-source-heat-pump-price-discount-date 2023-01-01:0.3 --green-attitudes-influence $theInfluence --heat-pump-installer-count 270
+            pipenv run python -m simulation "./input/scottish_stratified_sample_1.parquet"  "./green_attitudes_sc2__fixes${{matrix.parameters}}_${{matrix.run}}.jsonl.gz" --intervention boiler_upgrade_scheme --intervention gas_oil_boiler_ban --gas-oil-boiler-ban-date 2035-01-01 --gas-oil-boiler-ban-announce-date 2025-01-01 --heat-pump-awareness 0.5 --air-source-heat-pump-price-discount-date 2023-01-01:0.3 --price-gbp-per-kwh-gas 0.0589 --price-gbp-per-kwh-electricity 0.1494 --green-attitudes-influence $theInfluence --heat-pump-installer-count 270
       - name: Archive jsonl
         uses: actions/upload-artifact@v3
         with:
           name: green_attitudes_rhi_jsonl
           path: |
-           ./green_attitudes_sc1_${{matrix.parameters}}_${{matrix.run}}.jsonl.gz
-           ./green_attitudes_sc2_${{matrix.parameters}}_${{matrix.run}}.jsonl.gz
+           ./green_attitudes_sc1_fixes${{matrix.parameters}}_${{matrix.run}}.jsonl.gz
+           ./green_attitudes_sc2__fixes${{matrix.parameters}}_${{matrix.run}}.jsonl.gz
