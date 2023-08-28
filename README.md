@@ -3,14 +3,21 @@ An adaptation of Centre for Net Zero's agent-based model of heat pump adoption. 
 One adapted model is on each branch of the repo.
 
 Main: Centre for Net Zero model adapted for Scottish data. Some constants changed to Scottish values.
+
 Green attitudes: If agents have "green" attitudes (derived from the survey data below), they are more likely to adopt a heat pump.
+
 Social network awareness: Awareness of heat pump spreads through social diffusion
+
 Social network HP: Agents are more likely to adopt a heat pump if their neighbours adopt one
+
 No potential EPC: A sensitivity test, which tested whether excluding the influence of the potential EPC variable affected results
+
 No energy efficiency: Similar to no potential EPC, but setting all of the energy efficiency of windows, roofs and doors to one, to explore results
 
 The Centre for Net Zero instructions below contain links to obtain and process the English and Welsh data.
 The Scottish data is from the 2019 Scottish Health Survey and Scottish House Condition Survey, available through the UK Data Archive: https://www.data-archive.ac.uk/
+
+Data analysis is done in R, using the files in analysis. There is a common 'functions' file that is imported into most other files.
 
 ## Centre for Net Zero instructions
 
