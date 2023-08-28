@@ -54,5 +54,5 @@ jobs:
         with:
           name: scot_sc1_social_network_baseline_jsonl
           path: |
-            ./scot_sc1_social_network_baseline_${{ matrix.run }}.jsonl.gz
-            ./scot_sc2_social_network_baseline_${{ matrix.run }}.jsonl.gz
+            ./scot_sc1_social_network_baseline_fixes_${{ matrix.run }}.jsonl.gz
+            ./scot_sc2_social_network_baseline_fixes_${{ matrix.run }}.jsonl.gz
