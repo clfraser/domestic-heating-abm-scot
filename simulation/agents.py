@@ -519,7 +519,7 @@ class Household(Agent):
     ):
 
         cost_weights = []
-        neighbours_weight = []
+        neighbour_weights = []
         combined_weights = []
         multiple_cap = 50  # An arbitrary cap to prevent math.exp overflowing
 
@@ -535,17 +535,19 @@ class Household(Agent):
             # count neighbours where neighbours.heating_system = heating_system
             neighbours_with_heating_system = [n for n in self.neighbours if n.heating_system == heating_system]
             neighbour_weight = len(neighbours_with_heating_system) / len(self.neighbours) if len(self.neighbours) > 0 else 0
-            neighbours_weight.append(neighbour_weight)
+            neighbour_weights.append(neighbour_weight)
 
             # If the heating system is a heat pump, add the neighbour weight to the heat pump weight
-            if heating_system in HEAT_PUMPS:
-               combined_weights = [((1 - model.social_influence_importance) * w) + (model.social_influence_importance * n) for w, n in zip(cost_weights, neighbours_weight)]
+            if heating_system == HeatingSystem.HEAT_PUMP_AIR_SOURCE and neighbour_weight > 0:
+               combined_weights = [((1 - model.social_influence_importance) * w) + (model.social_influence_importance * n) for w, n in zip(cost_weights, neighbour_weights)]
+            elif heating_system == HeatingSystem.HEAT_PUMP_GROUND_SOURCE and neighbour_weight > 0:
+               combined_weights = [((1 - model.social_influence_importance) * w) + (model.social_influence_importance * n) for w, n in zip(cost_weights, neighbour_weights)]
             else:
                 combined_weights = cost_weights
 
         # Add weights to self as dictionaries so they can be included in the collectors
         self.cost_weights = dict(zip(costs, cost_weights))
-        self.neighbour_weights = dict(zip(costs, neighbours_weight))
+        self.neighbour_weights = dict(zip(costs, neighbour_weights))
         self.combined_weights = dict(zip(costs, combined_weights))
 
         #  Households for which all options are highly unaffordable (x10 out of budget) "repair" their existing heating system
