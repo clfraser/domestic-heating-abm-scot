@@ -1,5 +1,5 @@
 name: Run commands green attitudes
-on: [push]
+on: []
 
 env:
   PYTHONPATH: .
