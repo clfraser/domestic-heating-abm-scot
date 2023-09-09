@@ -122,7 +122,7 @@ def parse_args(args=None):
     parser.add_argument(
         "--heat-pump-installer-count",
         type=float,
-        default=2_800,
+        default=270, # Number of installers changed to scale for households in Scotland (9% of 3000 estimated installers here: https://assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/1036161/heat-pump-ready-programme-questions.pdf)
         help="The number of HP installers at the start of the simulation.",
     )
 
