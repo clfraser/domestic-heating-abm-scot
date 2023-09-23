@@ -12,7 +12,7 @@ import structlog
 from dateutil.relativedelta import relativedelta
 
 from abm import write_jsonlines
-from simulation.constants import ENGLAND_WALES_ANNUAL_NEW_BUILDS, InterventionType
+from simulation.constants import SCOTLAND_ANNUAL_NEW_BUILDS, InterventionType
 from simulation.model import create_and_run_simulation
 
 structlog.configure(
@@ -223,7 +223,7 @@ if __name__ == "__main__":
             args.air_source_heat_pump_price_discount_date,
             args.heat_pump_installer_count,
             args.heat_pump_installer_annual_growth_rate,
-            ENGLAND_WALES_ANNUAL_NEW_BUILDS if args.include_new_builds else None,
+            SCOTLAND_ANNUAL_NEW_BUILDS if args.include_new_builds else None,
             args.green_attitudes_influence,
         )
 
