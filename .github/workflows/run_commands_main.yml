@@ -1,5 +1,5 @@
 name: Run commands no element energy efficiency
-on: [push]
+on: []
 
 env:
   PYTHONPATH: .
