@@ -1,5 +1,5 @@
 name: Run commands main
-on: [push]
+on: []
 
 env:
   PYTHONPATH: .
