@@ -12,7 +12,7 @@ import structlog
 from dateutil.relativedelta import relativedelta
 
 from abm import write_jsonlines
-from simulation.constants import ENGLAND_WALES_ANNUAL_NEW_BUILDS, InterventionType
+from simulation.constants import SCOTLAND_ANNUAL_NEW_BUILDS, InterventionType
 from simulation.model import create_and_run_simulation
 
 structlog.configure(
@@ -122,7 +122,7 @@ def parse_args(args=None):
     parser.add_argument(
         "--heat-pump-installer-count",
         type=float,
-        default=2_800,
+        default=270, # Number of installers changed to scale for households in Scotland (9% of 3000 estimated installers here: https://assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/1036161/heat-pump-ready-programme-questions.pdf)
         help="The number of HP installers at the start of the simulation.",
     )
 
@@ -223,7 +223,7 @@ if __name__ == "__main__":
             args.air_source_heat_pump_price_discount_date,
             args.heat_pump_installer_count,
             args.heat_pump_installer_annual_growth_rate,
-            ENGLAND_WALES_ANNUAL_NEW_BUILDS if args.include_new_builds else None,
+            SCOTLAND_ANNUAL_NEW_BUILDS if args.include_new_builds else None,
             args.social_influence_importance,
         )
 
